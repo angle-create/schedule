@@ -246,7 +246,10 @@ export const Calendar = () => {
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: ''
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          }}
+          datesSet={(dateInfo) => {
+            setView(dateInfo.view.type as 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay')
           }}
           height="100%"
           firstDay={1}
@@ -288,12 +291,9 @@ export const Calendar = () => {
             month: 'long'
           }}
           views={{
-            timeGridWeek: {
-              titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
-            },
-            timeGridDay: {
-              titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
-            }
+            dayGridMonth: { buttonText: '月' },
+            timeGridWeek: { buttonText: '週' },
+            timeGridDay: { buttonText: '日' }
           }}
           eventClassNames="text-gray-800"
           dayCellClassNames="text-gray-800"
