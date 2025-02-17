@@ -20,10 +20,12 @@ export const LoginForm = () => {
         password,
       })
 
-      if (error) {
-        throw error
-      }
+      if (error) throw error
+
+      // リダイレクト
+      window.location.href = '/'
     } catch (error) {
+      console.error('ログインエラー:', error)
       setError(error instanceof Error ? error.message : 'ログインに失敗しました')
     } finally {
       setLoading(false)
