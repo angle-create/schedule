@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 
 export const LoginForm = () => {
+  const searchParams = useSearchParams()
+  const redirectPath = searchParams.get('redirect') || '/'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -38,7 +41,7 @@ export const LoginForm = () => {
       }
 
       // リダイレクト
-      window.location.href = '/'
+      window.location.href = redirectPath
     } catch (error) {
       console.error('認証エラー:', error)
       setError(error instanceof Error ? error.message : '認証に失敗しました')
