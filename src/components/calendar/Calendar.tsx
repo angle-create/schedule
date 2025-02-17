@@ -1,5 +1,8 @@
-import { useState } from 'react'
-import FullCalendar from '@fullcalendar/react'
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
+import { EventSourceInput, DateSelectArg, EventClickArg, EventDropArg, EventResizeDuringDragArg } from '@fullcalendar/core'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -13,6 +16,15 @@ import { differenceInMinutes } from 'date-fns'
 import { eventColors } from '@/utils/eventColors'
 import { canEditSchedule } from '@/utils/permissions'
 
+// FullCalendarをクライアントサイドでのみ読み込むように設定
+const FullCalendarComponent = dynamic(
+  () => import('@fullcalendar/react'),
+  { 
+    ssr: false,
+    loading: () => <div className="h-[600px] bg-white rounded-lg shadow-sm p-4 flex items-center justify-center">Loading...</div>
+  }
+)
+
 export const Calendar = () => {
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('dayGridMonth')
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -22,13 +34,14 @@ export const Calendar = () => {
   const { updateSchedule } = useScheduleMutation()
   const { user } = useAuth()
 
-  const handleDateSelect = (selectInfo: any) => {
+  // イベントハンドラーをuseCallbackでメモ化
+  const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     setSelectedDate(selectInfo.start)
     setSelectedEvent(null)
     setShowEventModal(true)
-  }
+  }, [])
 
-  const handleEventClick = (clickInfo: any) => {
+  const handleEventClick = useCallback((clickInfo: EventClickArg) => {
     const event = clickInfo.event
     setSelectedEvent({
       id: event.id,
@@ -42,9 +55,9 @@ export const Calendar = () => {
       rrule: event.extendedProps.rrule
     })
     setShowEventModal(true)
-  }
+  }, [])
 
-  const handleEventDrop = async (dropInfo: any) => {
+  const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
     const event = dropInfo.event
     
     // 権限チェック
@@ -116,9 +129,9 @@ export const Calendar = () => {
         dropInfo.revert()
       }
     }
-  }
+  }, [schedules, updateSchedule, user])
 
-  const handleEventResize = async (resizeInfo: any) => {
+  const handleEventResize = useCallback(async (resizeInfo: EventResizeDuringDragArg) => {
     const event = resizeInfo.event
     
     // 権限チェック
@@ -144,9 +157,9 @@ export const Calendar = () => {
       console.error('予定の更新に失敗しました:', error)
       resizeInfo.revert()
     }
-  }
+  }, [updateSchedule, user])
 
-  const getEventColors = (schedule: any) => {
+  const getEventColors = useCallback((schedule: any) => {
     // 自分が作成した予定
     if (schedule.creator_id === user?.id) {
       return eventColors.created;
@@ -159,37 +172,32 @@ export const Calendar = () => {
 
     // オンライン/オフラインの色分け
     return schedule.is_online ? eventColors.online : eventColors.offline;
-  };
+  }, [user?.id])
 
-  const events = schedules?.map(schedule => {
-    const colors = getEventColors(schedule);
-    const canEdit = canEditSchedule({
+  const events: EventSourceInput = schedules?.map(schedule => ({
+    id: schedule.recurrence_id || schedule.id,
+    title: schedule.title,
+    start: schedule.start_time,
+    end: schedule.end_time,
+    backgroundColor: getEventColors(schedule).backgroundColor,
+    borderColor: getEventColors(schedule).borderColor,
+    textColor: getEventColors(schedule).textColor,
+    extendedProps: {
+      description: schedule.description,
+      isOnline: schedule.is_online,
+      location: schedule.location,
+      creatorId: schedule.creator_id,
+      participantIds: schedule.participant_ids,
+      participantStatus: schedule.participant_status,
+      original_id: schedule.original_id,
+      rrule: schedule.rrule
+    },
+    editable: canEditSchedule({
       id: schedule.id,
       creator_id: schedule.creator_id,
       participant_ids: schedule.participant_ids
-    }, user);
-
-    return {
-      id: schedule.recurrence_id || schedule.id,
-      title: schedule.title,
-      start: schedule.start_time,
-      end: schedule.end_time,
-      backgroundColor: colors.backgroundColor,
-      borderColor: colors.borderColor,
-      textColor: colors.textColor,
-      extendedProps: {
-        description: schedule.description,
-        isOnline: schedule.is_online,
-        location: schedule.location,
-        creatorId: schedule.creator_id,
-        participantIds: schedule.participant_ids,
-        participantStatus: schedule.participant_status,
-        original_id: schedule.original_id,
-        rrule: schedule.rrule
-      },
-      editable: canEdit
-    };
-  }) || []
+    }, user)
+  })) || []
 
   if (error) {
     return <div className="text-red-500">エラーが発生しました</div>
@@ -218,8 +226,8 @@ export const Calendar = () => {
           </div>
         </div>
       </div>
-      <div className="mt-4">
-        <FullCalendar
+      <div className="mt-4 h-[600px]">
+        <FullCalendarComponent
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView={view}
           locale={jaLocale}
@@ -229,16 +237,22 @@ export const Calendar = () => {
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
           }}
           events={events}
-          selectable={true}
-          selectMirror={true}
-          dayMaxEvents={true}
-          weekends={true}
+          selectable
+          selectMirror
+          dayMaxEvents
+          weekends
+          editable
           select={handleDateSelect}
           eventClick={handleEventClick}
           eventDrop={handleEventDrop}
           eventResize={handleEventResize}
-          editable={true}
-          loading={isLoading}
+          height="100%"
+          firstDay={1}
+          allDaySlot={false}
+          slotMinTime="00:00:00"
+          slotMaxTime="24:00:00"
+          slotDuration="00:30:00"
+          expandRows
         />
       </div>
       {showEventModal && (
