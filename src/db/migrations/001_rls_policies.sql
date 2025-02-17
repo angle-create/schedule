@@ -16,7 +16,7 @@ CREATE POLICY "管理者は全てのユーザー情報を更新可能" ON users
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM auth.users
-      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
+      WHERE auth.uid() = auth.uid() AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
@@ -36,7 +36,7 @@ CREATE POLICY "管理者は全ての予定を参照可能" ON schedules
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM auth.users
-      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
+      WHERE auth.uid() = auth.uid() AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
@@ -47,7 +47,7 @@ CREATE POLICY "管理者は全ての予定を更新可能" ON schedules
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM auth.users
-      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
+      WHERE auth.uid() = auth.uid() AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
@@ -61,7 +61,7 @@ CREATE POLICY "管理者は全ての予定を削除可能" ON schedules
   FOR DELETE USING (
     EXISTS (
       SELECT 1 FROM auth.users
-      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
+      WHERE auth.uid() = auth.uid() AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
@@ -81,7 +81,7 @@ CREATE POLICY "管理者は全ての参加者情報を参照可能" ON schedule_
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM auth.users
-      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
+      WHERE auth.uid() = auth.uid() AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
@@ -127,7 +127,7 @@ CREATE POLICY "管理者は全ての変更履歴を参照可能" ON schedule_cha
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM auth.users
-      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
+      WHERE auth.uid() = auth.uid() AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
