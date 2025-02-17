@@ -274,4 +274,3 @@ export const EventModal = ({
       </Dialog.Portal>
     </Dialog.Root>
   );
-}; 
