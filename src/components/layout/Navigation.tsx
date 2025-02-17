@@ -28,7 +28,7 @@ export const Navigation = () => {
     <div className="fixed left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0">
       <div className="h-full px-3 py-4 overflow-y-auto bg-white border-r border-gray-200 flex flex-col">
         <div className="mb-10 mt-4">
-          <span className="text-xl font-semibold">スケジュール管理</span>
+          <span className="text-xl font-semibold text-gray-800">スケジュール管理</span>
         </div>
         <ul className="space-y-2 flex-grow">
           {navigation.map((item) => {

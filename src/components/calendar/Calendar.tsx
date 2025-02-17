@@ -199,6 +199,15 @@ export const Calendar = () => {
     }, user)
   })) || []
 
+  const renderEventContent = useCallback((eventInfo: any) => {
+    const { event } = eventInfo
+    return (
+      <>
+        {event.title}
+      </>
+    )
+  }, [])
+
   if (error) {
     return <div className="text-red-500">エラーが発生しました</div>
   }
@@ -228,31 +237,69 @@ export const Calendar = () => {
       </div>
       <div className="mt-4 h-[600px]">
         <FullCalendarComponent
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          plugins={[
+            dayGridPlugin,
+            timeGridPlugin,
+            interactionPlugin
+          ]}
           initialView={view}
-          locale={jaLocale}
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: ''
           }}
-          events={events}
-          selectable
-          selectMirror
-          dayMaxEvents
-          weekends
-          editable
-          select={handleDateSelect}
-          eventClick={handleEventClick}
-          eventDrop={handleEventDrop}
-          eventResize={handleEventResize}
           height="100%"
           firstDay={1}
           allDaySlot={false}
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
-          slotDuration="00:30:00"
-          expandRows
+          expandRows={true}
+          events={events}
+          eventContent={renderEventContent}
+          eventClick={handleEventClick}
+          select={handleDateSelect}
+          eventDrop={handleEventDrop}
+          eventResize={handleEventResize}
+          selectable={true}
+          selectMirror={true}
+          dayMaxEvents={true}
+          weekends={true}
+          locale="ja"
+          slotLabelFormat={{
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: false
+          }}
+          buttonText={{
+            today: '今日'
+          }}
+          eventTimeFormat={{
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: false
+          }}
+          dayHeaderFormat={{
+            weekday: 'short',
+            month: 'numeric',
+            day: 'numeric'
+          }}
+          titleFormat={{
+            year: 'numeric',
+            month: 'long'
+          }}
+          views={{
+            timeGridWeek: {
+              titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
+            },
+            timeGridDay: {
+              titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
+            }
+          }}
+          eventClassNames="text-gray-800"
+          dayCellClassNames="text-gray-800"
+          slotLabelClassNames="text-gray-800"
+          dayHeaderClassNames="text-gray-800"
+          viewClassNames="text-gray-800"
         />
       </div>
       {showEventModal && (
