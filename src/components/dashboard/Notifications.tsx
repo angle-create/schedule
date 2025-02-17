@@ -89,7 +89,7 @@ export const Notifications = () => {
         <h2 className="text-lg font-semibold mb-4">未確認の予定</h2>
         <div className="animate-pulse space-y-4">
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-16 bg-gray-200 rounded"></div>
+            <div key={i} className="h-16 bg-gray-200 rounded" data-testid="loading-skeleton"></div>
           ))}
         </div>
       </div>
