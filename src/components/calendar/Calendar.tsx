@@ -213,29 +213,29 @@ export const Calendar = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
+    <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg">
       <div className="flex justify-between items-center mb-4">
         <ViewFilter currentView={view} onViewChange={setView} />
-        <div className="flex gap-2 text-sm">
-          <div className="flex items-center gap-1">
+        <div className="flex gap-4 text-sm">
+          <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#8B5CF6]"></span>
-            <span>作成した予定</span>
+            <span className="text-gray-600">作成した予定</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#F59E0B]"></span>
-            <span>未回答</span>
+            <span className="text-gray-600">未回答</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#10B981]"></span>
-            <span>参加</span>
+            <span className="text-gray-600">参加</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#EF4444]"></span>
-            <span>不参加</span>
+            <span className="text-gray-600">不参加</span>
           </div>
         </div>
       </div>
-      <div className="mt-4 h-[600px]">
+      <div className="mt-4 bg-white/50 backdrop-blur-sm rounded-xl p-4 shadow-sm">
         <FullCalendarComponent
           plugins={[
             dayGridPlugin,
