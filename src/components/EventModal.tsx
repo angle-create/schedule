@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useParticipantAvailability } from '@/hooks/useParticipantAvailability';
 import { useUsers } from '@/hooks/useUsers';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { NotificationSettingsForm } from './NotificationSettingsForm';
+import { RecurrenceSettingsForm } from './RecurrenceSettingsForm';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface EventData {
   participantIds: string[];
   location?: string;
   isOnline: boolean;
+  rrule?: string;
   notificationSettings?: {
     slackChannel?: string;
     slackMentionType?: 'none' | 'direct' | 'here' | 'channel';
@@ -51,6 +53,7 @@ export const EventModal = ({
   const [location, setLocation] = useState(initialData?.location || '');
   const [isOnline, setIsOnline] = useState(initialData?.isOnline || false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [rrule, setRrule] = useState<string | null>(initialData?.rrule || null);
 
   const { users, isLoading: isLoadingUsers } = useUsers();
   const { availabilities, isLoading: isLoadingAvailabilities } = useParticipantAvailability(
@@ -70,6 +73,7 @@ export const EventModal = ({
       participantIds: selectedParticipants,
       location,
       isOnline,
+      rrule: rrule || undefined,
       notificationSettings: {
         slackChannel: notificationSettings?.slackChannel,
         slackMentionType: notificationSettings?.slackMentionType,
@@ -236,6 +240,16 @@ export const EventModal = ({
               )}
             </div>
 
+            <div className="border rounded-md p-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
+                繰り返し設定
+              </h3>
+              <RecurrenceSettingsForm
+                value={rrule || undefined}
+                onChange={setRrule}
+              />
+            </div>
+
             <div>
               <button
                 type="button"
@@ -274,3 +288,4 @@ export const EventModal = ({
       </Dialog.Portal>
     </Dialog.Root>
   );
+};
