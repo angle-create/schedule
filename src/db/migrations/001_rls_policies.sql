@@ -44,59 +44,52 @@ CREATE POLICY "管理者は全てのユーザー情報を更新可能" ON users
   FOR UPDATE USING (auth.jwt()->>'role' = 'admin');
 
 -- schedulesテーブルのポリシー
-CREATE POLICY "ユーザーは自分が作成した予定を参照可能" ON schedules
-  FOR SELECT USING (creator_id = auth.uid());
-
-CREATE POLICY "ユーザーは自分が参加者の予定を参照可能" ON schedules
+CREATE POLICY "ユーザーは予定を参照可能" ON schedules
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM schedule_participants 
-      WHERE schedule_id = id AND user_id = auth.uid()
+    creator_id = auth.uid()
+    OR auth.jwt()->>'role' = 'admin'
+    OR id IN (
+      SELECT schedule_id FROM schedule_participants
+      WHERE user_id = auth.uid()
     )
   );
 
-CREATE POLICY "管理者は全ての予定を参照可能" ON schedules
-  FOR SELECT USING (auth.jwt()->>'role' = 'admin');
-
-CREATE POLICY "ユーザーは自分が作成した予定を更新可能" ON schedules
-  FOR UPDATE USING (creator_id = auth.uid());
-
-CREATE POLICY "管理者は全ての予定を更新可能" ON schedules
-  FOR UPDATE USING (auth.jwt()->>'role' = 'admin');
+CREATE POLICY "ユーザーは予定を更新可能" ON schedules
+  FOR UPDATE USING (
+    creator_id = auth.uid()
+    OR auth.jwt()->>'role' = 'admin'
+  );
 
 CREATE POLICY "ユーザーは予定を作成可能" ON schedules
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
-CREATE POLICY "ユーザーは自分が作成した予定を削除可能" ON schedules
-  FOR DELETE USING (creator_id = auth.uid());
-
-CREATE POLICY "管理者は全ての予定を削除可能" ON schedules
-  FOR DELETE USING (auth.jwt()->>'role' = 'admin');
+CREATE POLICY "ユーザーは予定を削除可能" ON schedules
+  FOR DELETE USING (
+    creator_id = auth.uid()
+    OR auth.jwt()->>'role' = 'admin'
+  );
 
 -- schedule_participantsテーブルのポリシー
-CREATE POLICY "ユーザーは自分の参加情報を参照可能" ON schedule_participants
-  FOR SELECT USING (user_id = auth.uid());
-
-CREATE POLICY "予定作成者は参加者情報を参照可能" ON schedule_participants
+CREATE POLICY "ユーザーは参加情報を参照可能" ON schedule_participants
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM schedules 
-      WHERE id = schedule_id AND creator_id = auth.uid()
+    user_id = auth.uid()
+    OR auth.jwt()->>'role' = 'admin'
+    OR schedule_id IN (
+      SELECT id FROM schedules
+      WHERE creator_id = auth.uid()
     )
   );
 
-CREATE POLICY "管理者は全ての参加者情報を参照可能" ON schedule_participants
-  FOR SELECT USING (auth.jwt()->>'role' = 'admin');
-
-CREATE POLICY "ユーザーは自分の参加ステータスを更新可能" ON schedule_participants
+CREATE POLICY "ユーザーは参加ステータスを更新可能" ON schedule_participants
   FOR UPDATE USING (user_id = auth.uid());
 
-CREATE POLICY "予定作成者は参加者を追加可能" ON schedule_participants
+CREATE POLICY "ユーザーは参加者を追加可能" ON schedule_participants
   FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM schedules 
-      WHERE id = schedule_id AND creator_id = auth.uid()
+    schedule_id IN (
+      SELECT id FROM schedules
+      WHERE creator_id = auth.uid()
     )
+    OR auth.jwt()->>'role' = 'admin'
   );
 
 -- notification_settingsテーブルのポリシー
@@ -119,12 +112,10 @@ CREATE POLICY "ユーザーは関連する予定の変更履歴を参照可能" 
       AND (
         s.creator_id = auth.uid() 
         OR sp.user_id = auth.uid()
+        OR auth.jwt()->>'role' = 'admin'
       )
     )
   );
-
-CREATE POLICY "管理者は全ての変更履歴を参照可能" ON schedule_changes
-  FOR SELECT USING (auth.jwt()->>'role' = 'admin');
 
 CREATE POLICY "システムは変更履歴を作成可能" ON schedule_changes
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL); 
