@@ -3,6 +3,8 @@ import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useScheduleMutation } from '@/hooks/useScheduleMutation'
+import { useUsers } from '@/hooks/useUsers'
+import { useTimezones } from '@/hooks/useTimezones'
 
 interface EventModalProps {
   date: Date
@@ -14,6 +16,14 @@ interface EventModalProps {
     start: Date
     end: Date
     isOnline: boolean
+    location?: string
+    participants?: string[]
+    timezone?: string
+    notifications?: {
+      slack: boolean
+      email: boolean
+      system: boolean
+    }
   }
 }
 
@@ -30,8 +40,20 @@ export const EventModal = ({ date, onClose, event }: EventModalProps) => {
     )
   )
   const [isOnline, setIsOnline] = useState(event?.isOnline || false)
+  const [location, setLocation] = useState(event?.location || '')
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>(
+    event?.participants || []
+  )
+  const [timezone, setTimezone] = useState(event?.timezone || 'Asia/Tokyo')
+  const [notifications, setNotifications] = useState(event?.notifications || {
+    slack: true,
+    email: true,
+    system: true
+  })
 
   const { createSchedule, updateSchedule, isLoading } = useScheduleMutation()
+  const { users } = useUsers()
+  const { timezones } = useTimezones()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,7 +63,11 @@ export const EventModal = ({ date, onClose, event }: EventModalProps) => {
       description,
       start_time: new Date(startTime).toISOString(),
       end_time: new Date(endTime).toISOString(),
-      is_online: isOnline
+      is_online: isOnline,
+      location,
+      timezone,
+      participants: selectedParticipants,
+      notifications
     }
 
     try {
@@ -60,7 +86,7 @@ export const EventModal = ({ date, onClose, event }: EventModalProps) => {
     <Dialog.Root open={true} onOpenChange={onClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 w-full max-w-md">
+        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <Dialog.Title className="text-lg font-semibold mb-4">
             {event ? '予定を編集' : '新しい予定'}
           </Dialog.Title>
@@ -116,7 +142,23 @@ export const EventModal = ({ date, onClose, event }: EventModalProps) => {
                 </div>
               </div>
               <div>
-                <label className="flex items-center">
+                <label className="block text-sm font-medium text-gray-700">
+                  タイムゾーン
+                </label>
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  {timezones.map((tz) => (
+                    <option key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="flex items-center mb-2">
                   <input
                     type="checkbox"
                     checked={isOnline}
@@ -127,6 +169,82 @@ export const EventModal = ({ date, onClose, event }: EventModalProps) => {
                     オンラインミーティング
                   </span>
                 </label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder={isOnline ? "URLを入力" : "場所を入力"}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  参加者
+                </label>
+                <select
+                  multiple
+                  value={selectedParticipants}
+                  onChange={(e) => {
+                    const selected = Array.from(e.target.selectedOptions).map(option => option.value)
+                    setSelectedParticipants(selected)
+                  }}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.display_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  通知設定
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={notifications.slack}
+                      onChange={(e) => setNotifications(prev => ({
+                        ...prev,
+                        slack: e.target.checked
+                      }))}
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">
+                      Slack通知
+                    </span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={notifications.email}
+                      onChange={(e) => setNotifications(prev => ({
+                        ...prev,
+                        email: e.target.checked
+                      }))}
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">
+                      メール通知
+                    </span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={notifications.system}
+                      onChange={(e) => setNotifications(prev => ({
+                        ...prev,
+                        system: e.target.checked
+                      }))}
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">
+                      システム内通知
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
