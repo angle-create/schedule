@@ -82,19 +82,16 @@ CREATE POLICY "ユーザーは自分の通知設定を作成可能" ON notificat
   FOR INSERT WITH CHECK (user_id = auth.uid());
 
 -- schedule_changesテーブルのポリシー
-CREATE POLICY "ユーザーは自分が作成した予定の変更履歴を参照可能" ON schedule_changes
+CREATE POLICY "ユーザーは関連する予定の変更履歴を参照可能" ON schedule_changes
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM schedules 
-      WHERE id = schedule_id AND creator_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "ユーザーは自分が参加者の予定の変更履歴を参照可能" ON schedule_changes
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM schedule_participants 
-      WHERE schedule_id = schedule_id AND user_id = auth.uid()
+      SELECT 1 FROM schedules s
+      LEFT JOIN schedule_participants sp ON s.id = sp.schedule_id
+      WHERE s.id = schedule_id 
+      AND (
+        s.creator_id = auth.uid() 
+        OR sp.user_id = auth.uid()
+      )
     )
   );
 
