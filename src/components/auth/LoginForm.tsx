@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 
+const PASSWORD_MIN_LENGTH = 8
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/
+
 export const LoginForm = () => {
   const searchParams = useSearchParams()
   const redirectPath = searchParams.get('redirect') || '/'
@@ -14,6 +17,16 @@ export const LoginForm = () => {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  const validatePassword = (password: string): string | null => {
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      return 'パスワードは8文字以上である必要があります'
+    }
+    if (!PASSWORD_REGEX.test(password)) {
+      return 'パスワードは英字と数字を含む必要があります'
+    }
+    return null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -21,6 +34,14 @@ export const LoginForm = () => {
 
     try {
       if (isSignUp) {
+        // パスワードのバリデーション
+        const passwordError = validatePassword(password)
+        if (passwordError) {
+          setError(passwordError)
+          setLoading(false)
+          return
+        }
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -37,7 +58,12 @@ export const LoginForm = () => {
           email,
           password,
         })
-        if (error) throw error
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('メールアドレスまたはパスワードが正しくありません')
+          }
+          throw error
+        }
       }
 
       // リダイレクト
@@ -93,9 +119,14 @@ export const LoginForm = () => {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="パスワードを入力"
+          placeholder={isSignUp ? "8文字以上の英数字を入力" : "パスワードを入力"}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
         />
+        {isSignUp && (
+          <p className="mt-1 text-sm text-gray-500">
+            ※ 8文字以上の英字と数字を組み合わせてください
+          </p>
+        )}
       </div>
 
       {error && (
@@ -115,7 +146,10 @@ export const LoginForm = () => {
       <div className="text-center space-y-2">
         <button
           type="button"
-          onClick={() => setIsSignUp(!isSignUp)}
+          onClick={() => {
+            setIsSignUp(!isSignUp)
+            setError(null)
+          }}
           className="text-sm text-indigo-600 hover:text-indigo-500"
         >
           {isSignUp ? 'ログインする' : '新規登録する'}
