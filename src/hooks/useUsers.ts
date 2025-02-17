@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
 interface User {
@@ -14,25 +14,28 @@ export const useUsers = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .order('display_name')
+  const fetchUsers = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('display_name')
 
-        if (error) throw error
-        setUsers(data || [])
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('ユーザーの取得に失敗しました'))
-      } finally {
-        setIsLoading(false)
-      }
+      if (error) throw error
+      setUsers(data || [])
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('ユーザーの取得に失敗しました'))
+    } finally {
+      setIsLoading(false)
     }
-
-    fetchUsers()
   }, [])
 
-  return { users, isLoading, error }
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
+
+  return { users, isLoading, error, refetch: fetchUsers }
 } 
