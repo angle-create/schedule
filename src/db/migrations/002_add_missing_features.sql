@@ -36,4 +36,19 @@ CREATE POLICY "ユーザーは自分のカレンダー設定を作成可能" ON 
 CREATE TRIGGER update_calendar_settings_updated_at
   BEFORE UPDATE ON calendar_settings
   FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at(); 
+  EXECUTE FUNCTION update_updated_at();
+
+-- ユーザーのスケジュールビューの作成
+CREATE OR REPLACE VIEW user_schedules AS
+SELECT 
+  s.*,
+  sp.status as participant_status
+FROM schedules s
+LEFT JOIN schedule_participants sp ON s.id = sp.schedule_id
+WHERE s.creator_id = auth.uid() 
+   OR sp.user_id = auth.uid()
+   OR EXISTS (
+     SELECT 1 FROM users u 
+     WHERE u.id = auth.uid() 
+     AND u.role = 'admin'
+   ); 
