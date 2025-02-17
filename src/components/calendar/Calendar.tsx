@@ -10,6 +10,7 @@ import { useSchedules } from '@/hooks/useSchedules'
 import { useScheduleMutation } from '@/hooks/useScheduleMutation'
 import { useAuth } from '@/hooks/useAuth'
 import { differenceInMinutes } from 'date-fns'
+import { eventColors } from '@/utils/eventColors'
 
 export const Calendar = () => {
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('dayGridMonth')
@@ -119,25 +120,44 @@ export const Calendar = () => {
     }
   }
 
-  const events = schedules?.map(schedule => ({
-    id: schedule.recurrence_id || schedule.id,
-    title: schedule.title,
-    start: schedule.start_time,
-    end: schedule.end_time,
-    backgroundColor: schedule.is_online ? '#3B82F6' : '#10B981',
-    borderColor: schedule.is_online ? '#2563EB' : '#059669',
-    extendedProps: {
-      description: schedule.description,
-      isOnline: schedule.is_online,
-      location: schedule.location,
-      creatorId: schedule.creator_id,
-      participantIds: schedule.participant_ids,
-      participantStatus: schedule.participant_status,
-      original_id: schedule.original_id,
-      rrule: schedule.rrule
-    },
-    editable: schedule.creator_id === user?.id
-  })) || []
+  const getEventColors = (schedule: any) => {
+    // 自分が作成した予定
+    if (schedule.creator_id === user?.id) {
+      return eventColors.created;
+    }
+
+    // 参加ステータスによる色分け
+    if (schedule.participant_status) {
+      return eventColors[schedule.participant_status];
+    }
+
+    // オンライン/オフラインの色分け
+    return schedule.is_online ? eventColors.online : eventColors.offline;
+  };
+
+  const events = schedules?.map(schedule => {
+    const colors = getEventColors(schedule);
+    return {
+      id: schedule.recurrence_id || schedule.id,
+      title: schedule.title,
+      start: schedule.start_time,
+      end: schedule.end_time,
+      backgroundColor: colors.backgroundColor,
+      borderColor: colors.borderColor,
+      textColor: colors.textColor,
+      extendedProps: {
+        description: schedule.description,
+        isOnline: schedule.is_online,
+        location: schedule.location,
+        creatorId: schedule.creator_id,
+        participantIds: schedule.participant_ids,
+        participantStatus: schedule.participant_status,
+        original_id: schedule.original_id,
+        rrule: schedule.rrule
+      },
+      editable: schedule.creator_id === user?.id
+    };
+  }) || []
 
   if (error) {
     return <div className="text-red-500">エラーが発生しました</div>
@@ -145,7 +165,27 @@ export const Calendar = () => {
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
-      <ViewFilter currentView={view} onViewChange={setView} />
+      <div className="flex justify-between items-center mb-4">
+        <ViewFilter currentView={view} onViewChange={setView} />
+        <div className="flex gap-2 text-sm">
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-[#8B5CF6]"></span>
+            <span>作成した予定</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-[#F59E0B]"></span>
+            <span>未回答</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-[#10B981]"></span>
+            <span>参加</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-[#EF4444]"></span>
+            <span>不参加</span>
+          </div>
+        </div>
+      </div>
       <div className="mt-4">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
