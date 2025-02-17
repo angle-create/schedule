@@ -70,11 +70,14 @@ export const ChangeHistory = () => {
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold mb-4">変更履歴</h2>
+      <div className="bg-gradient-to-br from-violet-50 to-white p-6 rounded-2xl shadow-lg">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+          <span className="bg-violet-100 text-violet-600 p-2 rounded-lg mr-2">📝</span>
+          変更履歴
+        </h2>
         <div className="animate-pulse space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-16 bg-gray-200 rounded" data-testid="loading-skeleton"></div>
+            <div key={i} className="h-16 bg-violet-50 rounded-xl" data-testid="loading-skeleton"></div>
           ))}
         </div>
       </div>
@@ -82,26 +85,34 @@ export const ChangeHistory = () => {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-4">変更履歴</h2>
+    <div className="bg-gradient-to-br from-violet-50 to-white p-6 rounded-2xl shadow-lg">
+      <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+        <span className="bg-violet-100 text-violet-600 p-2 rounded-lg mr-2">📝</span>
+        変更履歴
+      </h2>
       {history.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">変更履歴はありません</p>
+        <div className="bg-white/50 backdrop-blur-sm rounded-xl p-8 text-center">
+          <p className="text-gray-500">変更履歴はありません</p>
+        </div>
       ) : (
         <div className="space-y-4">
           {history.map((item) => (
             <div
               key={item.id}
-              className="border rounded-lg p-4"
+              className="bg-white/50 backdrop-blur-sm border border-violet-100 rounded-xl p-4 hover:bg-white/80 transition-all duration-200 shadow-sm hover:shadow-md"
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-medium">{item.schedule_title}</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="font-semibold text-gray-800">{item.schedule_title}</h3>
+                  <p className="text-sm text-violet-600 font-medium flex items-center mt-1">
+                    <span className="bg-violet-100 text-violet-600 p-1 rounded-lg mr-2">
+                      {item.change_type === 'created' ? '✨' : item.change_type === 'updated' ? '🔄' : '🗑️'}
+                    </span>
                     {item.changed_by}が
-                    <span className="font-medium">{getChangeTypeText(item.change_type)}</span>
+                    <span className="font-medium mx-1">{getChangeTypeText(item.change_type)}</span>
                     しました
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 mt-2">
                     {format(new Date(item.created_at), 'M月d日(E) HH:mm', { locale: ja })}
                   </p>
                 </div>

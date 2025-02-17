@@ -85,11 +85,14 @@ export const Notifications = () => {
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold mb-4">未確認の予定</h2>
+      <div className="bg-gradient-to-br from-rose-50 to-white p-6 rounded-2xl shadow-lg">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+          <span className="bg-rose-100 text-rose-600 p-2 rounded-lg mr-2">🔔</span>
+          未確認の予定
+        </h2>
         <div className="animate-pulse space-y-4">
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-16 bg-gray-200 rounded" data-testid="loading-skeleton"></div>
+            <div key={i} className="h-16 bg-rose-50 rounded-xl" data-testid="loading-skeleton"></div>
           ))}
         </div>
       </div>
@@ -97,38 +100,44 @@ export const Notifications = () => {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-4">未確認の予定</h2>
+    <div className="bg-gradient-to-br from-rose-50 to-white p-6 rounded-2xl shadow-lg">
+      <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+        <span className="bg-rose-100 text-rose-600 p-2 rounded-lg mr-2">🔔</span>
+        未確認の予定
+      </h2>
       {notifications.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">未確認の予定はありません</p>
+        <div className="bg-white/50 backdrop-blur-sm rounded-xl p-8 text-center">
+          <p className="text-gray-500">未確認の予定はありません</p>
+        </div>
       ) : (
         <div className="space-y-4">
           {notifications.map((notification) => (
             <div
               key={notification.id}
-              className="border rounded-lg p-4"
+              className="bg-white/50 backdrop-blur-sm border border-rose-100 rounded-xl p-4 hover:bg-white/80 transition-all duration-200 shadow-sm hover:shadow-md"
             >
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h3 className="font-medium">{notification.title}</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="font-semibold text-gray-800">{notification.title}</h3>
+                  <p className="text-sm text-rose-600 font-medium">
                     {format(new Date(notification.start_time), 'M月d日(E) HH:mm', { locale: ja })}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    作成者: {notification.creator_name}
+                  <p className="text-sm text-gray-600 mt-1 flex items-center">
+                    <span className="bg-gray-100 p-1 rounded-full mr-2">👤</span>
+                    {notification.creator_name}
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-4">
                 <button
                   onClick={() => handleAccept(notification.id)}
-                  className="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm rounded-lg font-medium hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-sm hover:shadow-md"
                 >
                   参加
                 </button>
                 <button
                   onClick={() => handleDecline(notification.id)}
-                  className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 text-sm rounded-lg font-medium hover:from-gray-200 hover:to-gray-300 transition-all duration-200 shadow-sm hover:shadow-md"
                 >
                   不参加
                 </button>

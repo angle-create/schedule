@@ -41,11 +41,14 @@ export const TodaySchedules = () => {
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold mb-4">今日の予定</h2>
+      <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+          <span className="bg-indigo-100 text-indigo-600 p-2 rounded-lg mr-2">📅</span>
+          今日の予定
+        </h2>
         <div className="animate-pulse space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-20 bg-gray-200 rounded" data-testid="loading-skeleton"></div>
+            <div key={i} className="h-20 bg-indigo-50 rounded-xl" data-testid="loading-skeleton"></div>
           ))}
         </div>
       </div>
@@ -53,37 +56,51 @@ export const TodaySchedules = () => {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-4">今日の予定</h2>
+    <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg">
+      <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+        <span className="bg-indigo-100 text-indigo-600 p-2 rounded-lg mr-2">📅</span>
+        今日の予定
+      </h2>
       {schedules.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">予定はありません</p>
+        <div className="bg-white/50 backdrop-blur-sm rounded-xl p-8 text-center">
+          <p className="text-gray-500">予定はありません</p>
+        </div>
       ) : (
         <div className="space-y-4">
           {schedules.map((schedule) => (
             <div
               key={schedule.id}
-              className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+              className="bg-white/50 backdrop-blur-sm border border-indigo-100 rounded-xl p-4 hover:bg-white/80 transition-all duration-200 shadow-sm hover:shadow-md"
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-medium">{schedule.title}</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="font-semibold text-gray-800">{schedule.title}</h3>
+                  <p className="text-sm text-indigo-600 font-medium">
                     {format(new Date(schedule.start_time), 'HH:mm', { locale: ja })} - 
                     {format(new Date(schedule.end_time), 'HH:mm', { locale: ja })}
                   </p>
                 </div>
-                <span className={`px-2 py-1 rounded text-xs ${
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                   schedule.is_online 
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-green-100 text-green-800'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-emerald-100 text-emerald-700'
                 }`}>
                   {schedule.is_online ? 'オンライン' : 'オフライン'}
                 </span>
               </div>
-              <div className="mt-2 text-sm text-gray-500">
-                <span>作成者: {schedule.creator_name}</span>
-                <span className="ml-4">
-                  ステータス: {
+              <div className="mt-3 text-sm border-t border-indigo-50 pt-3 flex items-center justify-between">
+                <span className="text-gray-600 flex items-center">
+                  <span className="bg-gray-100 p-1 rounded-full mr-2">👤</span>
+                  {schedule.creator_name}
+                </span>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  {
+                    'pending': 'bg-amber-100 text-amber-700',
+                    'accepted': 'bg-emerald-100 text-emerald-700',
+                    'declined': 'bg-red-100 text-red-700'
+                  }[schedule.participant_status] || 'bg-gray-100 text-gray-700'
+                }`}>
+                  {
                     {
                       'pending': '未回答',
                       'accepted': '参加',
