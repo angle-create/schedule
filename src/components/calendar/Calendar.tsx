@@ -7,7 +7,6 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import jaLocale from '@fullcalendar/core/locales/ja'
-import { ViewFilter } from './ViewFilter'
 import { EventModal } from './EventModal'
 import { useSchedules } from '@/hooks/useSchedules'
 import { useScheduleMutation } from '@/hooks/useScheduleMutation'
@@ -214,8 +213,7 @@ export const Calendar = () => {
 
   return (
     <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg">
-      <div className="flex justify-between items-center mb-4">
-        <ViewFilter currentView={view} onViewChange={setView} />
+      <div className="flex justify-end items-center mb-4">
         <div className="flex gap-4 text-sm">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#8B5CF6]"></span>
