@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
 const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/
@@ -16,6 +17,7 @@ export const LoginForm = () => {
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const validatePassword = (password: string): string | null => {
     if (password.length < PASSWORD_MIN_LENGTH) {
@@ -49,10 +51,12 @@ export const LoginForm = () => {
             data: {
               display_name: displayName || email.split('@')[0],
               role: 'member'
-            }
+            },
+            emailRedirectTo: `${window.location.origin}/auth/callback`
           }
         })
         if (error) throw error
+        setError('確認メールを送信しました。メールをご確認ください。')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -64,10 +68,9 @@ export const LoginForm = () => {
           }
           throw error
         }
+        // リダイレクト
+        window.location.href = redirectPath
       }
-
-      // リダイレクト
-      window.location.href = redirectPath
     } catch (error) {
       console.error('認証エラー:', error)
       setError(error instanceof Error ? error.message : '認証に失敗しました')
@@ -113,15 +116,28 @@ export const LoginForm = () => {
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
           パスワード
         </label>
-        <input
-          id="password"
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder={isSignUp ? "8文字以上の英数字を入力" : "パスワードを入力"}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-        />
+        <div className="mt-1 relative">
+          <input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder={isSignUp ? "8文字以上の英数字を含むパスワード" : "パスワード"}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+          >
+            {showPassword ? (
+              <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+            ) : (
+              <EyeIcon className="h-5 w-5 text-gray-400" />
+            )}
+          </button>
+        </div>
         {isSignUp && (
           <p className="mt-1 text-sm text-gray-500">
             ※ 8文字以上の英字と数字を組み合わせてください
