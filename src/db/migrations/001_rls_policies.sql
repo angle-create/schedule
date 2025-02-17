@@ -6,23 +6,17 @@ ALTER TABLE notification_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedule_changes ENABLE ROW LEVEL SECURITY;
 
 -- usersテーブルのポリシー
-CREATE POLICY "ユーザーは自分の情報を参照可能" ON users
-  FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "全てのユーザーが参照可能" ON users
+  FOR SELECT USING (true);
 
 CREATE POLICY "ユーザーは自分の情報を更新可能" ON users
   FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "管理者は全てのユーザー情報を参照可能" ON users
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
 CREATE POLICY "管理者は全てのユーザー情報を更新可能" ON users
   FOR UPDATE USING (
     EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
+      SELECT 1 FROM auth.users
+      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
@@ -41,7 +35,8 @@ CREATE POLICY "ユーザーは自分が参加者の予定を参照可能" ON sch
 CREATE POLICY "管理者は全ての予定を参照可能" ON schedules
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
+      SELECT 1 FROM auth.users
+      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
@@ -51,7 +46,8 @@ CREATE POLICY "ユーザーは自分が作成した予定を更新可能" ON sch
 CREATE POLICY "管理者は全ての予定を更新可能" ON schedules
   FOR UPDATE USING (
     EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
+      SELECT 1 FROM auth.users
+      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
@@ -64,7 +60,8 @@ CREATE POLICY "ユーザーは自分が作成した予定を削除可能" ON sch
 CREATE POLICY "管理者は全ての予定を削除可能" ON schedules
   FOR DELETE USING (
     EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
+      SELECT 1 FROM auth.users
+      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
@@ -83,7 +80,8 @@ CREATE POLICY "予定作成者は参加者情報を参照可能" ON schedule_par
 CREATE POLICY "管理者は全ての参加者情報を参照可能" ON schedule_participants
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
+      SELECT 1 FROM auth.users
+      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
@@ -128,7 +126,8 @@ CREATE POLICY "ユーザーは自分が参加者の予定の変更履歴を参�
 CREATE POLICY "管理者は全ての変更履歴を参照可能" ON schedule_changes
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
+      SELECT 1 FROM auth.users
+      WHERE auth.uid() = id AND raw_user_meta_data->>'role' = 'admin'
     )
   );
 
