@@ -5,6 +5,34 @@ ALTER TABLE schedule_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedule_changes ENABLE ROW LEVEL SECURITY;
 
+-- 既存のポリシーを削除
+DROP POLICY IF EXISTS "全てのユーザーが参照可能" ON users;
+DROP POLICY IF EXISTS "ユーザーは自分の情報を更新可能" ON users;
+DROP POLICY IF EXISTS "管理者は全てのユーザー情報を更新可能" ON users;
+
+DROP POLICY IF EXISTS "ユーザーは自分が作成した予定を参照可能" ON schedules;
+DROP POLICY IF EXISTS "ユーザーは自分が参加者の予定を参照可能" ON schedules;
+DROP POLICY IF EXISTS "管理者は全ての予定を参照可能" ON schedules;
+DROP POLICY IF EXISTS "ユーザーは自分が作成した予定を更新可能" ON schedules;
+DROP POLICY IF EXISTS "管理者は全ての予定を更新可能" ON schedules;
+DROP POLICY IF EXISTS "ユーザーは予定を作成可能" ON schedules;
+DROP POLICY IF EXISTS "ユーザーは自分が作成した予定を削除可能" ON schedules;
+DROP POLICY IF EXISTS "管理者は全ての予定を削除可能" ON schedules;
+
+DROP POLICY IF EXISTS "ユーザーは自分の参加情報を参照可能" ON schedule_participants;
+DROP POLICY IF EXISTS "予定作成者は参加者情報を参照可能" ON schedule_participants;
+DROP POLICY IF EXISTS "管理者は全ての参加者情報を参照可能" ON schedule_participants;
+DROP POLICY IF EXISTS "ユーザーは自分の参加ステータスを更新可能" ON schedule_participants;
+DROP POLICY IF EXISTS "予定作成者は参加者を追加可能" ON schedule_participants;
+
+DROP POLICY IF EXISTS "ユーザーは自分の通知設定を参照可能" ON notification_settings;
+DROP POLICY IF EXISTS "ユーザーは自分の通知設定を更新可能" ON notification_settings;
+DROP POLICY IF EXISTS "ユーザーは自分の通知設定を作成可能" ON notification_settings;
+
+DROP POLICY IF EXISTS "ユーザーは関連する予定の変更履歴を参照可能" ON schedule_changes;
+DROP POLICY IF EXISTS "管理者は全ての変更履歴を参照可能" ON schedule_changes;
+DROP POLICY IF EXISTS "システムは変更履歴を作成可能" ON schedule_changes;
+
 -- usersテーブルのポリシー
 CREATE POLICY "全てのユーザーが参照可能" ON users
   FOR SELECT USING (true);
