@@ -5,13 +5,14 @@ import { useUsers } from '@/hooks/useUsers';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { NotificationSettingsForm } from './NotificationSettingsForm';
 import { RecurrenceSettingsForm } from './RecurrenceSettingsForm';
+import { canEditSchedule, canUpdateParticipantStatus } from '@/utils/permissions';
 
 interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (eventData: EventData) => void;
   initialData?: EventData;
-  currentUserId: string;
+  currentUser: AuthUser;
 }
 
 interface EventData {
@@ -37,7 +38,7 @@ export const EventModal = ({
   onClose,
   onSubmit,
   initialData,
-  currentUserId
+  currentUser
 }: EventModalProps) => {
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
@@ -61,7 +62,23 @@ export const EventModal = ({
     startTime,
     endTime
   );
-  const { settings: notificationSettings, updateSettings: updateNotificationSettings } = useNotificationSettings(currentUserId);
+  const { settings: notificationSettings, updateSettings: updateNotificationSettings } = useNotificationSettings(currentUser.id);
+
+  const canEdit = initialData 
+    ? canEditSchedule({ 
+        id: initialData.id, 
+        creator_id: initialData.creatorId,
+        participant_ids: initialData.participantIds 
+      }, currentUser)
+    : true;
+
+  const canUpdateStatus = initialData
+    ? canUpdateParticipantStatus({
+        id: initialData.id,
+        creator_id: initialData.creatorId,
+        participant_ids: initialData.participantIds
+      }, currentUser)
+    : true;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,7 +130,8 @@ export const EventModal = ({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full border rounded-md px-3 py-2"
+                disabled={!canEdit}
+                className="w-full border rounded-md px-3 py-2 disabled:bg-gray-100 disabled:text-gray-500"
               />
             </div>
 
@@ -268,6 +286,42 @@ export const EventModal = ({
               )}
             </div>
 
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                参加ステータス
+              </label>
+              {canUpdateStatus ? (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleStatusUpdate('accepted')}
+                    className={`px-4 py-2 rounded ${
+                      participantStatus === 'accepted'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    参加
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleStatusUpdate('declined')}
+                    className={`px-4 py-2 rounded ${
+                      participantStatus === 'declined'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    不参加
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  このスケジュールの参加ステータスを更新する権限がありません
+                </p>
+              )}
+            </div>
+
             <div className="flex justify-end space-x-2 pt-4">
               <button
                 type="button"
@@ -276,12 +330,14 @@ export const EventModal = ({
               >
                 キャンセル
               </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
-              >
-                {initialData ? '更新' : '作成'}
-              </button>
+              {canEdit && (
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                >
+                  {initialData ? '更新' : '作成'}
+                </button>
+              )}
             </div>
           </form>
         </Dialog.Content>

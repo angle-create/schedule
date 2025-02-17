@@ -11,6 +11,7 @@ import { useScheduleMutation } from '@/hooks/useScheduleMutation'
 import { useAuth } from '@/hooks/useAuth'
 import { differenceInMinutes } from 'date-fns'
 import { eventColors } from '@/utils/eventColors'
+import { canEditSchedule } from '@/utils/permissions'
 
 export const Calendar = () => {
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('dayGridMonth')
@@ -45,8 +46,20 @@ export const Calendar = () => {
 
   const handleEventDrop = async (dropInfo: any) => {
     const event = dropInfo.event
-    const delta = dropInfo.delta
     
+    // 権限チェック
+    const hasPermission = canEditSchedule({
+      id: event.id,
+      creator_id: event.extendedProps.creatorId,
+      participant_ids: event.extendedProps.participantIds
+    }, user)
+
+    if (!hasPermission) {
+      dropInfo.revert()
+      alert('この予定を編集する権限がありません')
+      return
+    }
+
     // 繰り返し予定の場合は確認を求める
     if (event.extendedProps.original_id) {
       const confirmed = window.confirm(
@@ -108,6 +121,19 @@ export const Calendar = () => {
   const handleEventResize = async (resizeInfo: any) => {
     const event = resizeInfo.event
     
+    // 権限チェック
+    const hasPermission = canEditSchedule({
+      id: event.id,
+      creator_id: event.extendedProps.creatorId,
+      participant_ids: event.extendedProps.participantIds
+    }, user)
+
+    if (!hasPermission) {
+      resizeInfo.revert()
+      alert('この予定を編集する権限がありません')
+      return
+    }
+
     try {
       await updateSchedule({
         id: event.id,
@@ -137,6 +163,12 @@ export const Calendar = () => {
 
   const events = schedules?.map(schedule => {
     const colors = getEventColors(schedule);
+    const canEdit = canEditSchedule({
+      id: schedule.id,
+      creator_id: schedule.creator_id,
+      participant_ids: schedule.participant_ids
+    }, user);
+
     return {
       id: schedule.recurrence_id || schedule.id,
       title: schedule.title,
@@ -155,7 +187,7 @@ export const Calendar = () => {
         original_id: schedule.original_id,
         rrule: schedule.rrule
       },
-      editable: schedule.creator_id === user?.id
+      editable: canEdit
     };
   }) || []
 
