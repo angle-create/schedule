@@ -233,7 +233,7 @@ export const Calendar = () => {
           </div>
         </div>
       </div>
-      <div className="mt-4 bg-white/50 backdrop-blur-sm rounded-xl p-4 shadow-sm">
+      <div className="mt-4 bg-white/50 backdrop-blur-sm rounded-xl p-4 shadow-sm h-[800px]">
         <FullCalendarComponent
           plugins={[
             dayGridPlugin,
@@ -255,6 +255,7 @@ export const Calendar = () => {
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
           expandRows={true}
+          dayMaxEventRows={4}
           events={events}
           eventContent={renderEventContent}
           eventClick={handleEventClick}
