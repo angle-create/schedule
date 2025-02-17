@@ -234,6 +234,11 @@ export const Calendar = () => {
         </div>
       </div>
       <div className="mt-4 bg-white/50 backdrop-blur-sm rounded-xl p-4 shadow-sm h-[800px]">
+        <style>{`
+          .fc .fc-toolbar-title {
+            color: #1f2937;
+          }
+        `}</style>
         <FullCalendarComponent
           plugins={[
             dayGridPlugin,
@@ -283,22 +288,37 @@ export const Calendar = () => {
           dayHeaderFormat={{
             weekday: 'short',
             month: 'numeric',
-            day: 'numeric'
+            day: 'numeric',
+            omitCommas: true
           }}
           titleFormat={{
             year: 'numeric',
             month: 'long'
           }}
           views={{
-            dayGridMonth: { buttonText: '月' },
+            dayGridMonth: { 
+              buttonText: '月',
+              dayHeaderFormat: { weekday: 'short' }
+            },
             timeGridWeek: { buttonText: '週' },
             timeGridDay: { buttonText: '日' }
           }}
           eventClassNames="text-gray-800"
-          dayCellClassNames="text-gray-800"
+          dayCellClassNames="text-gray-800 h-24"
           slotLabelClassNames="text-gray-800"
-          dayHeaderClassNames="text-gray-800"
+          dayHeaderClassNames="text-gray-800 py-2"
           viewClassNames="text-gray-800"
+          headerClassNames={{
+            toolbar: 'text-gray-800 font-bold'
+          }}
+          buttonClassNames={{
+            today: 'bg-white hover:bg-gray-100',
+            prev: 'bg-white hover:bg-gray-100',
+            next: 'bg-white hover:bg-gray-100',
+            dayGridMonth: 'bg-white hover:bg-gray-100',
+            timeGridWeek: 'bg-white hover:bg-gray-100',
+            timeGridDay: 'bg-white hover:bg-gray-100'
+          }}
         />
       </div>
       {showEventModal && (
