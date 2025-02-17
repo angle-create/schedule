@@ -15,25 +15,25 @@ export const MiniCalendar = () => {
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-lg font-semibold text-gray-800">
           {format(currentDate, 'yyyy年M月', { locale: ja })}
         </h2>
         <div className="flex gap-2">
           <button
             onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded"
           >
             ←
           </button>
           <button
             onClick={() => setCurrentDate(new Date())}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded"
           >
             今日
           </button>
           <button
             onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded"
           >
             →
           </button>
@@ -44,7 +44,7 @@ export const MiniCalendar = () => {
         {weekDays.map((day) => (
           <div
             key={day}
-            className="text-center text-sm font-medium text-gray-500 py-2"
+            className="text-center text-sm font-medium text-gray-600 py-2"
           >
             {day}
           </div>
@@ -60,7 +60,7 @@ export const MiniCalendar = () => {
                 p-2 text-sm rounded-full
                 ${!isCurrentMonth && 'text-gray-300'}
                 ${isCurrentDay && 'bg-indigo-600 text-white'}
-                ${isCurrentMonth && !isCurrentDay && 'hover:bg-gray-100'}
+                ${isCurrentMonth && !isCurrentDay && 'text-gray-700 hover:bg-gray-100'}
               `}
             >
               {format(day, 'd')}
