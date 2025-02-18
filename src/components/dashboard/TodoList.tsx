@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
@@ -20,7 +20,7 @@ export const TodoList = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchTodos = async () => {
+  const fetchTodos = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -30,13 +30,19 @@ export const TodoList = () => {
       if (sessionError) {
         console.error('セッションエラー:', sessionError)
         setError('認証に失敗しました')
+        setTodos([])
+        setLoading(false)
         return
       }
-      if (!session) {
+      if (!session?.user?.id) {
+        console.log('セッションなし - fetchTodos')
         setError('ログインが必要です')
+        setTodos([])
+        setLoading(false)
         return
       }
 
+      console.log('データ取得開始:', session.user.id)
       const { data, error: fetchError } = await supabase
         .from('todos')
         .select('*')
@@ -48,18 +54,132 @@ export const TodoList = () => {
         throw fetchError
       }
 
+      console.log('取得したデータ:', data?.length || 0, '件')
       setTodos(data || [])
     } catch (error) {
       console.error('TODOの取得に失敗しました:', error)
       setError('TODOの取得に失敗しました')
+      setTodos([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    fetchTodos()
-  }, [])
+    let mounted = true
+    let todoSubscription: any = null
+
+    const initialize = async () => {
+      try {
+        console.log('初期化開始')
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError) {
+          console.error('初期化時のセッションエラー:', sessionError)
+          return
+        }
+
+        if (session?.user?.id && mounted) {
+          console.log('初期化時のセッション確認OK:', session.user.id)
+          await fetchTodos()
+
+          // リアルタイム更新のセットアップ
+          todoSubscription = supabase
+            .channel('todos-channel')
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'todos',
+                filter: `user_id=eq.${session.user.id}`
+              },
+              async (payload) => {
+                console.log('リアルタイム更新:', payload.eventType)
+                if (mounted) {
+                  await fetchTodos()
+                }
+              }
+            )
+            .subscribe((status) => {
+              console.log('Subscription status:', status)
+            })
+        } else {
+          console.log('初期化時にセッションなし')
+          setTodos([])
+          setError('ログインが必要です')
+        }
+      } catch (error) {
+        console.error('初期化エラー:', error)
+      }
+    }
+
+    // 初期化実行
+    initialize()
+
+    // 認証状態の監視
+    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('認証状態変更:', event, session?.user?.id)
+        
+        if (!mounted) return
+
+        if (session?.user?.id) {
+          console.log('認証状態変更: ログイン')
+          await fetchTodos()
+
+          // 既存のサブスクリプションをクリーンアップ
+          if (todoSubscription) {
+            todoSubscription.unsubscribe()
+          }
+
+          // 新しいサブスクリプションをセットアップ
+          todoSubscription = supabase
+            .channel('todos-channel')
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'todos',
+                filter: `user_id=eq.${session.user.id}`
+              },
+              async (payload) => {
+                console.log('リアルタイム更新:', payload.eventType)
+                if (mounted) {
+                  await fetchTodos()
+                }
+              }
+            )
+            .subscribe((status) => {
+              console.log('Subscription status:', status)
+            })
+        } else {
+          console.log('認証状態変更: ログアウト')
+          setTodos([])
+          setError('ログインが必要です')
+          
+          // サブスクリプションのクリーンアップ
+          if (todoSubscription) {
+            todoSubscription.unsubscribe()
+            todoSubscription = null
+          }
+        }
+      }
+    )
+
+    // クリーンアップ
+    return () => {
+      console.log('コンポーネントのクリーンアップ')
+      mounted = false
+      if (authSubscription) {
+        authSubscription.unsubscribe()
+      }
+      if (todoSubscription) {
+        todoSubscription.unsubscribe()
+      }
+    }
+  }, [fetchTodos])
 
   const addTodo = async (e: React.FormEvent) => {
     e.preventDefault()
