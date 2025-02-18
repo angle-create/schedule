@@ -1,22 +1,27 @@
 import { AppLayout } from '@/components/layout/AppLayout'
 import { TodaySchedules } from '@/components/dashboard/TodaySchedules'
-import { MiniCalendar } from '@/components/dashboard/MiniCalendar'
-import { Notifications } from '@/components/dashboard/Notifications'
-import { ChangeHistory } from '@/components/dashboard/ChangeHistory'
+import { TodoList } from '@/components/dashboard/TodoList'
+import { Clock } from '@/components/dashboard/Clock'
 
 export default function DashboardPage() {
   return (
     <AppLayout>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <TodaySchedules />
-          <ChangeHistory />
+      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-2rem)]">
+        <div className="lg:w-1/2 flex flex-col gap-6">
+          <div className="h-44">
+            <Clock />
+          </div>
+          <div className="flex-1 min-h-0">
+            <TodaySchedules />
+          </div>
         </div>
-        <div className="space-y-6">
-          <MiniCalendar />
-          <Notifications />
+        <div className="lg:w-1/2 flex flex-col">
+          <div className="flex-1 min-h-0">
+            <TodoList />
+          </div>
         </div>
       </div>
     </AppLayout>
   )
 }
+

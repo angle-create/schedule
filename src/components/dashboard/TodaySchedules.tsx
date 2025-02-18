@@ -41,7 +41,7 @@ export const TodaySchedules = () => {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg">
+      <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg h-full">
         <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
           <span className="bg-indigo-100 text-indigo-600 p-2 rounded-lg mr-2">📅</span>
           今日の予定
@@ -56,17 +56,17 @@ export const TodaySchedules = () => {
   }
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg">
-      <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+    <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg h-full flex flex-col">
+      <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center flex-shrink-0">
         <span className="bg-indigo-100 text-indigo-600 p-2 rounded-lg mr-2">📅</span>
         今日の予定
       </h2>
       {schedules.length === 0 ? (
-        <div className="bg-white/50 backdrop-blur-sm rounded-xl p-8 text-center">
+        <div className="bg-white/50 backdrop-blur-sm rounded-xl p-8 text-center flex-1 flex items-center justify-center">
           <p className="text-gray-500">予定はありません</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1 pr-2">
           {schedules.map((schedule) => (
             <div
               key={schedule.id}
@@ -88,7 +88,8 @@ export const TodaySchedules = () => {
                   {schedule.is_online ? 'オンライン' : 'オフライン'}
                 </span>
               </div>
-              <div className="mt-3 text-sm border-t border-indigo-50 pt-3 flex items-center justify-between">
+              
+              <div className="mt-2 flex items-center justify-between">
                 <span className="text-gray-600 flex items-center">
                   <span className="bg-gray-100 p-1 rounded-full mr-2">👤</span>
                   {schedule.creator_name}

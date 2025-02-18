@@ -44,7 +44,7 @@ export const LoginForm = () => {
           return
         }
 
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -56,6 +56,7 @@ export const LoginForm = () => {
           }
         })
         if (error) throw error
+
         setError('確認メールを送信しました。メールをご確認ください。')
       } else {
         // ログイン処理

@@ -4,7 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 export default function CalendarPage() {
   return (
     <AppLayout>
-      <div>
+      <div className="h-[calc(100vh-2rem)]">
         <Calendar />
       </div>
     </AppLayout>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { EventSourceInput, DateSelectArg, EventClickArg, EventDropArg, EventResizeDuringDragArg } from '@fullcalendar/core'
+import { EventResizeArg, EventResizeDoneArg } from '@fullcalendar/interaction'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -23,6 +24,74 @@ const FullCalendarComponent = dynamic(
     loading: () => <div className="h-[600px] bg-white rounded-lg shadow-sm p-4 flex items-center justify-center">Loading...</div>
   }
 )
+
+// 型定義の追加
+interface ExpandedSchedule {
+  id: string
+  title: string
+  description?: string
+  start_time: string
+  end_time: string
+  is_online: boolean
+  location?: string
+  creator_id: string
+  participant_ids?: string[]
+  participant_status?: string
+  original_id?: string
+  rrule?: string
+  recurrence_id?: string
+}
+
+interface UpdateScheduleData {
+  id: string
+  title: string
+  description?: string
+  start_time: string
+  end_time: string
+  is_online: boolean
+  location?: string
+  participant_ids?: string[]
+  exception_dates?: string[]
+}
+
+interface Schedule {
+  id: string
+  title: string
+  description?: string
+  start_time: string
+  end_time: string
+  is_online: boolean
+  location?: string
+  creator_id: string
+  participant_ids?: string[]
+  participant_status?: 'pending' | 'accepted' | 'declined'
+  original_id?: string
+  rrule?: string
+  recurrence_id?: string
+}
+
+interface ScheduleEventColors {
+  backgroundColor: string
+  borderColor: string
+  textColor: string
+}
+
+interface EventColors {
+  online: ScheduleEventColors
+  offline: ScheduleEventColors
+  pending: ScheduleEventColors
+  accepted: ScheduleEventColors
+  declined: ScheduleEventColors
+  created: ScheduleEventColors
+  [key: string]: ScheduleEventColors
+}
+
+interface EventModalProps {
+  onClose: () => void
+  initialData: Schedule | null
+  currentUserId: string
+  onSubmit: (eventData: UpdateScheduleData) => Promise<void>
+}
 
 export const Calendar = () => {
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('dayGridMonth')
@@ -58,97 +127,37 @@ export const Calendar = () => {
 
   const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
     const event = dropInfo.event
-    
-    // 権限チェック
-    const hasPermission = canEditSchedule({
-      id: event.id,
-      creator_id: event.extendedProps.creatorId,
-      participant_ids: event.extendedProps.participantIds
-    }, user)
-
-    if (!hasPermission) {
+    if (!event.start || !event.end) {
       dropInfo.revert()
-      alert('この予定を編集する権限がありません')
       return
     }
-
-    // 繰り返し予定の場合は確認を求める
-    if (event.extendedProps.original_id) {
-      const confirmed = window.confirm(
-        '繰り返し予定の1つを移動しようとしています。\n' +
-        'このイベントのみを移動しますか？\n' +
-        '「キャンセル」を選択すると、すべての繰り返しイベントを移動します。'
-      )
-
-      if (confirmed) {
-        // この1回のみの予定として新規作成
-        try {
-          const newEvent = {
-            title: event.title,
-            description: event.extendedProps.description,
-            start_time: event.start.toISOString(),
-            end_time: event.end.toISOString(),
-            is_online: event.extendedProps.isOnline,
-            location: event.extendedProps.location,
-            participant_ids: event.extendedProps.participantIds,
-            exception_dates: [event.start.toISOString().split('T')[0]]
-          }
-          await updateSchedule({ id: event.extendedProps.original_id, ...newEvent })
-        } catch (error) {
-          console.error('予定の更新に失敗しました:', error)
-          dropInfo.revert()
-        }
-      } else {
-        // 繰り返し予定全体を移動
-        try {
-          const originalEvent = schedules.find(s => s.id === event.extendedProps.original_id)
-          if (originalEvent) {
-            const minutesDelta = differenceInMinutes(event.start, new Date(originalEvent.start_time))
-            await updateSchedule({
-              id: event.extendedProps.original_id,
-              start_time: event.start.toISOString(),
-              end_time: event.end.toISOString()
-            })
-          }
-        } catch (error) {
-          console.error('予定の更新に失敗しました:', error)
-          dropInfo.revert()
-        }
-      }
-    } else {
-      // 通常の予定の移動
-      try {
-        await updateSchedule({
-          id: event.id,
-          start_time: event.start.toISOString(),
-          end_time: event.end.toISOString()
-        })
-      } catch (error) {
-        console.error('予定の更新に失敗しました:', error)
-        dropInfo.revert()
-      }
-    }
-  }, [schedules, updateSchedule, user])
-
-  const handleEventResize = useCallback(async (resizeInfo: EventResizeDuringDragArg) => {
-    const event = resizeInfo.event
     
-    // 権限チェック
-    const hasPermission = canEditSchedule({
-      id: event.id,
-      creator_id: event.extendedProps.creatorId,
-      participant_ids: event.extendedProps.participantIds
-    }, user)
-
-    if (!hasPermission) {
-      resizeInfo.revert()
-      alert('この予定を編集する権限がありません')
-      return
-    }
-
     try {
       await updateSchedule({
         id: event.id,
+        title: event.title,
+        is_online: event.extendedProps.isOnline,
+        start_time: event.start.toISOString(),
+        end_time: event.end.toISOString()
+      })
+    } catch (error) {
+      console.error('予定の更新に失敗しました:', error)
+      dropInfo.revert()
+    }
+  }, [updateSchedule])
+
+  const handleEventResize = useCallback(async (resizeInfo: EventResizeDoneArg) => {
+    const event = resizeInfo.event
+    if (!event.start || !event.end) {
+      resizeInfo.revert()
+      return
+    }
+    
+    try {
+      await updateSchedule({
+        id: event.id,
+        title: event.title,
+        is_online: event.extendedProps.isOnline,
         start_time: event.start.toISOString(),
         end_time: event.end.toISOString()
       })
@@ -158,22 +167,22 @@ export const Calendar = () => {
     }
   }, [updateSchedule, user])
 
-  const getEventColors = useCallback((schedule: any) => {
+  const getEventColors = useCallback((schedule: Schedule) => {
     // 自分が作成した予定
     if (schedule.creator_id === user?.id) {
-      return eventColors.created;
+      return eventColors.created
     }
 
     // 参加ステータスによる色分け
-    if (schedule.participant_status) {
-      return eventColors[schedule.participant_status];
+    if (schedule.participant_status && eventColors[schedule.participant_status]) {
+      return eventColors[schedule.participant_status]
     }
 
     // オンライン/オフラインの色分け
-    return schedule.is_online ? eventColors.online : eventColors.offline;
+    return schedule.is_online ? eventColors.online : eventColors.offline
   }, [user?.id])
 
-  const events: EventSourceInput = schedules?.map(schedule => ({
+  const events: EventSourceInput = schedules?.map((schedule: Schedule) => ({
     id: schedule.recurrence_id || schedule.id,
     title: schedule.title,
     start: schedule.start_time,
@@ -191,11 +200,7 @@ export const Calendar = () => {
       original_id: schedule.original_id,
       rrule: schedule.rrule
     },
-    editable: canEditSchedule({
-      id: schedule.id,
-      creator_id: schedule.creator_id,
-      participant_ids: schedule.participant_ids
-    }, user)
+    editable: canEditSchedule(schedule, user)
   })) || []
 
   const renderEventContent = useCallback((eventInfo: any) => {
@@ -212,8 +217,9 @@ export const Calendar = () => {
   }
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg">
-      <div className="flex justify-end items-center mb-4">
+    <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg h-full flex flex-col">
+      <div className="flex-none flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-gray-800">カレンダー</h2>
         <div className="flex gap-4 text-sm">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#8B5CF6]"></span>
@@ -233,10 +239,203 @@ export const Calendar = () => {
           </div>
         </div>
       </div>
-      <div className="mt-4 bg-white/50 backdrop-blur-sm rounded-xl p-4 shadow-sm h-[800px]">
+      
+      <div className="flex-1 bg-white/50 backdrop-blur-sm rounded-xl p-4 min-h-0">
         <style>{`
+          .fc {
+            background: transparent;
+            height: 100% !important;
+          }
           .fc .fc-toolbar-title {
             color: #1f2937;
+            font-size: 1.25rem;
+            font-weight: 700;
+          }
+          .fc .fc-button {
+            background-color: transparent;
+            border: none;
+            color: #4b5563;
+            padding: 0.5rem;
+            transition: background-color 0.2s;
+            border-radius: 0.5rem;
+          }
+          .fc .fc-button:hover {
+            background-color: #f3f4f6;
+          }
+          .fc .fc-today-button {
+            padding: 0.25rem 0.5rem;
+            background-color: transparent !important;
+            color: #4b5563 !important;
+            font-weight: 500;
+            margin: 0 !important;
+            white-space: nowrap;
+          }
+          .fc .fc-today-button:hover {
+            background-color: #f3f4f6 !important;
+            border-color: transparent !important;
+          }
+          .fc .fc-prev-button,
+          .fc .fc-next-button {
+            background-color: transparent !important;
+            border: none !important;
+            color: #4b5563 !important;
+            padding: 0.25rem !important;
+            font-size: 1rem !important;
+            width: 1.75rem !important;
+            height: 1.75rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+          .fc .fc-prev-button::after,
+          .fc .fc-next-button::after {
+            content: "←" !important;
+            font-family: system-ui, -apple-system, sans-serif !important;
+          }
+          .fc .fc-next-button::after {
+            content: "→" !important;
+          }
+          .fc .fc-icon {
+            display: none !important;
+          }
+          .fc .fc-prev-button:hover,
+          .fc .fc-next-button:hover {
+            background-color: #f3f4f6 !important;
+          }
+          .fc .fc-button-primary:not(:disabled).fc-button-active,
+          .fc .fc-button-primary:not(:disabled):active {
+            background-color: #4f46e5;
+            color: white;
+          }
+          .fc .fc-daygrid-day.fc-day-today {
+            background-color: transparent;
+          }
+          .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+            background-color: #4f46e5;
+            color: white;
+            border-radius: 0.5rem;
+          }
+          .fc .fc-daygrid-day-frame {
+            padding: 0.5rem;
+          }
+          .fc .fc-daygrid-day-number {
+            font-size: 0.875rem;
+            color: #4b5563;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+          }
+          .fc .fc-daygrid-day-number:hover {
+            background-color: #f3f4f6;
+          }
+          .fc .fc-col-header-cell {
+            padding: 0.25rem 0 !important;
+            font-size: 0.75rem !important;
+            font-weight: 500;
+            color: #4b5563;
+          }
+          .fc .fc-toolbar {
+            margin-bottom: 0.5rem !important;
+          }
+          .fc .fc-toolbar-chunk {
+            display: flex;
+            gap: 0;
+            align-items: center;
+          }
+          .fc .fc-toolbar-chunk:first-child {
+            display: flex;
+            gap: 0;
+            width: 8rem;
+            justify-content: space-between;
+          }
+          .fc .fc-toolbar-chunk:first-child .fc-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .fc .fc-view-harness {
+            height: calc(100% - 3rem) !important;
+          }
+          .fc .fc-scrollgrid {
+            height: 100% !important;
+            border: none !important;
+          }
+          .fc .fc-scrollgrid-section-header {
+            height: 1.75rem !important;
+          }
+          .fc .fc-scrollgrid-section-body {
+            height: calc(100% - 1.75rem) !important;
+          }
+          .fc-dayGridMonth-view .fc-daygrid-body {
+            height: 100% !important;
+            min-height: 0 !important;
+          }
+          .fc-dayGridMonth-view .fc-daygrid-body > table {
+            height: 100% !important;
+          }
+          .fc-dayGridMonth-view .fc-scrollgrid-sync-table {
+            height: 100% !important;
+          }
+          .fc-dayGridMonth-view .fc-daygrid-body > table > tbody {
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .fc-dayGridMonth-view .fc-daygrid-body > table > tbody > tr {
+            flex: 1 1 0 !important;
+            display: flex !important;
+          }
+          .fc-dayGridMonth-view .fc-daygrid-body > table > tbody > tr > td {
+            flex: 1 1 0 !important;
+            height: auto !important;
+          }
+          .fc-dayGridMonth-view .fc-daygrid-day-frame {
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 0 !important;
+          }
+          .fc-dayGridMonth-view .fc-daygrid-day-top {
+            flex: 0 0 auto !important;
+          }
+          .fc-dayGridMonth-view .fc-daygrid-day-events {
+            flex: 1 1 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+          .fc-dayGridMonth-view .fc-daygrid-day-bottom {
+            flex: 0 0 auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .fc-theme-standard td, .fc-theme-standard th {
+            border: 1px solid #f0f1f3 !important;
+          }
+          .fc-theme-standard .fc-scrollgrid {
+            border: 1px solid #f0f1f3 !important;
+          }
+          .fc .fc-scrollgrid-section-sticky > * {
+            background: #fff !important;
+          }
+          .fc-col-header-cell {
+            background-color: #f9fafb !important;
+            border: none !important;
+          }
+          .fc-day-other {
+            background-color: #f9fafb !important;
+          }
+          .fc-day-today {
+            background-color: #eef2ff !important;
+          }
+          .fc-daygrid-day-number {
+            font-weight: 500 !important;
+          }
+          .fc-day-today .fc-daygrid-day-number {
+            background-color: #4f46e5 !important;
+            color: white !important;
+            font-weight: 600 !important;
           }
         `}</style>
         <FullCalendarComponent
@@ -246,8 +445,10 @@ export const Calendar = () => {
             interactionPlugin
           ]}
           initialView={view}
+          fixedWeekCount={false}
+          showNonCurrentDates={true}
           headerToolbar={{
-            left: 'prev,next today',
+            left: 'prev today next',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
           }}
@@ -255,12 +456,10 @@ export const Calendar = () => {
             setView(dateInfo.view.type as 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay')
           }}
           height="100%"
-          firstDay={1}
-          allDaySlot={false}
-          slotMinTime="00:00:00"
-          slotMaxTime="24:00:00"
+          aspectRatio={1.35}
           expandRows={true}
-          dayMaxEventRows={4}
+          dayMaxEventRows={true}
+          dayMaxEvents={4}
           events={events}
           eventContent={renderEventContent}
           eventClick={handleEventClick}
@@ -269,7 +468,6 @@ export const Calendar = () => {
           eventResize={handleEventResize}
           selectable={true}
           selectMirror={true}
-          dayMaxEvents={true}
           weekends={true}
           locale="ja"
           slotLabelFormat={{
@@ -298,7 +496,9 @@ export const Calendar = () => {
           views={{
             dayGridMonth: { 
               buttonText: '月',
-              dayHeaderFormat: { weekday: 'short' }
+              dayHeaderFormat: { weekday: 'short' },
+              fixedWeekCount: true,
+              height: '100%'
             },
             timeGridWeek: { buttonText: '週' },
             timeGridDay: { buttonText: '日' }
@@ -323,25 +523,23 @@ export const Calendar = () => {
       </div>
       {showEventModal && (
         <EventModal
-          isOpen={showEventModal}
-          onClose={() => {
-            setShowEventModal(false)
-            setSelectedEvent(null)
-          }}
-          initialData={selectedEvent}
-          currentUserId={user?.id || ''}
-          onSubmit={async (eventData) => {
-            try {
-              if (selectedEvent?.id) {
-                await updateSchedule({
-                  id: selectedEvent.id,
-                  ...eventData
-                })
-              }
+          {...{
+            onClose: () => {
               setShowEventModal(false)
               setSelectedEvent(null)
-            } catch (error) {
-              console.error('予定の更新に失敗しました:', error)
+            },
+            initialData: selectedEvent,
+            currentUserId: user?.id || '',
+            onSubmit: async (eventData: UpdateScheduleData) => {
+              try {
+                if (selectedEvent?.id) {
+                  await updateSchedule(eventData)
+                }
+                setShowEventModal(false)
+                setSelectedEvent(null)
+              } catch (error) {
+                console.error('予定の更新に失敗しました:', error)
+              }
             }
           }}
         />
