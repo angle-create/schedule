@@ -56,6 +56,12 @@ export const TodoList = () => {
 
       if (fetchError) {
         console.error('データ取得エラー:', fetchError)
+        console.error('エラーの詳細:', {
+          message: fetchError.message,
+          details: fetchError.details,
+          hint: fetchError.hint,
+          code: fetchError.code
+        })
         throw fetchError
       }
 
