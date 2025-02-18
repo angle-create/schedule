@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
-import { EventSourceInput, DateSelectArg, EventClickArg, EventDropArg, EventResizeDuringDragArg } from '@fullcalendar/core'
-import { EventResizeArg, EventResizeDoneArg } from '@fullcalendar/interaction'
+import { EventApi, DateSelectArg, EventClickArg, EventSourceInput, EventDropArg } from '@fullcalendar/core'
+import { EventResizeDoneArg } from '@fullcalendar/interaction'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -88,9 +88,10 @@ interface EventColors {
 
 interface EventModalProps {
   onClose: () => void
-  initialData: Schedule | null
+  initialData: any
   currentUserId: string
   onSubmit: (eventData: UpdateScheduleData) => Promise<void>
+  date: Date
 }
 
 export const Calendar = () => {
@@ -439,86 +440,30 @@ export const Calendar = () => {
           }
         `}</style>
         <FullCalendarComponent
-          plugins={[
-            dayGridPlugin,
-            timeGridPlugin,
-            interactionPlugin
-          ]}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView={view}
           fixedWeekCount={false}
           showNonCurrentDates={true}
           headerToolbar={{
-            left: 'prev today next',
+            left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
           }}
-          datesSet={(dateInfo) => {
-            setView(dateInfo.view.type as 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay')
-          }}
-          height="100%"
-          aspectRatio={1.35}
-          expandRows={true}
-          dayMaxEventRows={true}
-          dayMaxEvents={4}
           events={events}
           eventContent={renderEventContent}
           eventClick={handleEventClick}
-          select={handleDateSelect}
-          eventDrop={handleEventDrop}
           eventResize={handleEventResize}
+          eventDrop={handleEventDrop}
+          select={handleDateSelect}
           selectable={true}
-          selectMirror={true}
+          editable={true}
+          dayMaxEvents={true}
           weekends={true}
-          locale="ja"
-          slotLabelFormat={{
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: false
-          }}
-          buttonText={{
-            today: '今日'
-          }}
-          eventTimeFormat={{
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: false
-          }}
-          dayHeaderFormat={{
-            weekday: 'short',
-            month: 'numeric',
-            day: 'numeric',
-            omitCommas: true
-          }}
-          titleFormat={{
-            year: 'numeric',
-            month: 'long'
-          }}
-          views={{
-            dayGridMonth: { 
-              buttonText: '月',
-              dayHeaderFormat: { weekday: 'short' },
-              fixedWeekCount: true,
-              height: '100%'
-            },
-            timeGridWeek: { buttonText: '週' },
-            timeGridDay: { buttonText: '日' }
-          }}
-          eventClassNames="text-gray-800"
-          dayCellClassNames="text-gray-800 h-24"
-          slotLabelClassNames="text-gray-800"
-          dayHeaderClassNames="text-gray-800 py-2"
-          viewClassNames="text-gray-800"
-          headerClassNames={{
-            toolbar: 'text-gray-800 font-bold'
-          }}
-          buttonClassNames={{
-            today: 'bg-white hover:bg-gray-100',
-            prev: 'bg-white hover:bg-gray-100',
-            next: 'bg-white hover:bg-gray-100',
-            dayGridMonth: 'bg-white hover:bg-gray-100',
-            timeGridWeek: 'bg-white hover:bg-gray-100',
-            timeGridDay: 'bg-white hover:bg-gray-100'
-          }}
+          nowIndicator={true}
+          height="100%"
+          allDaySlot={false}
+          slotMinTime="00:00:00"
+          slotMaxTime="24:00:00"
         />
       </div>
       {showEventModal && (
@@ -540,7 +485,8 @@ export const Calendar = () => {
               } catch (error) {
                 console.error('予定の更新に失敗しました:', error)
               }
-            }
+            },
+            date: selectedDate || new Date()
           }}
         />
       )}
