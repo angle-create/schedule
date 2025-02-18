@@ -52,7 +52,13 @@ export const TodoList = () => {
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
 
-      console.log('データ取得結果:', { data, error: fetchError })
+      console.log('データ取得結果の詳細:', {
+        data,
+        error: fetchError,
+        dataType: data ? typeof data : 'undefined',
+        isArray: Array.isArray(data),
+        length: data?.length
+      })
 
       if (fetchError) {
         console.error('データ取得エラー:', fetchError)
@@ -66,7 +72,9 @@ export const TodoList = () => {
       }
 
       console.log('取得したデータ:', data)
+      console.log('データをステートに設定します')
       setTodos(data || [])
+      console.log('Todosステートを更新しました:', todos.length)
     } catch (error) {
       console.error('TODOの取得に失敗しました:', error)
       setError('TODOの取得に失敗しました')
@@ -277,6 +285,7 @@ export const TodoList = () => {
   }
 
   if (loading) {
+    console.log('ローディング中...')
     return (
       <div className="bg-gradient-to-br from-emerald-50 to-white p-6 rounded-2xl shadow-lg h-full">
         <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
@@ -292,6 +301,7 @@ export const TodoList = () => {
     )
   }
 
+  console.log('レンダリング時のtodos:', todos)
   return (
     <div className="bg-gradient-to-br from-emerald-50 to-white p-6 rounded-2xl shadow-lg h-full flex flex-col">
       <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center flex-shrink-0">
