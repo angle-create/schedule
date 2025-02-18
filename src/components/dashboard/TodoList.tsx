@@ -21,6 +21,7 @@ export const TodoList = () => {
   const [error, setError] = useState<string | null>(null)
 
   const fetchTodos = useCallback(async () => {
+    console.log('fetchTodos called')
     try {
       setLoading(true)
       setError(null)
@@ -54,7 +55,7 @@ export const TodoList = () => {
         throw fetchError
       }
 
-      console.log('取得したデータ:', data?.length || 0, '件')
+      console.log('取得したデータ:', data)
       setTodos(data || [])
     } catch (error) {
       console.error('TODOの取得に失敗しました:', error)
@@ -81,6 +82,7 @@ export const TodoList = () => {
 
         if (session?.user?.id && mounted) {
           console.log('初期化時のセッション確認OK:', session.user.id)
+          console.log('初期化時のfetchTodos呼び出し')
           await fetchTodos()
 
           // リアルタイム更新のセットアップ
@@ -97,6 +99,7 @@ export const TodoList = () => {
               async (payload) => {
                 console.log('リアルタイム更新:', payload.eventType)
                 if (mounted) {
+                  console.log('リアルタイム更新によるfetchTodos呼び出し')
                   await fetchTodos()
                 }
               }
@@ -126,6 +129,7 @@ export const TodoList = () => {
 
         if (session?.user?.id) {
           console.log('認証状態変更: ログイン')
+          console.log('認証状態変更時のfetchTodos呼び出し')
           await fetchTodos()
 
           // 既存のサブスクリプションをクリーンアップ
@@ -147,6 +151,7 @@ export const TodoList = () => {
               async (payload) => {
                 console.log('リアルタイム更新:', payload.eventType)
                 if (mounted) {
+                  console.log('リアルタイム更新によるfetchTodos呼び出し')
                   await fetchTodos()
                 }
               }
