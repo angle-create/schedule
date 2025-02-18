@@ -20,43 +20,65 @@ export const TodoList = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchTodos()
-  }, [])
-
   const fetchTodos = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      // セッションの確認
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        console.error('セッションエラー:', sessionError)
+        setError('認証に失敗しました')
+        return
+      }
+      if (!session) {
+        setError('ログインが必要です')
+        return
+      }
 
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('todos')
         .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (fetchError) {
+        console.error('データ取得エラー:', fetchError)
+        throw fetchError
+      }
+
       setTodos(data || [])
     } catch (error) {
-      console.error('Error fetching todos:', error)
+      console.error('TODOの取得に失敗しました:', error)
       setError('TODOの取得に失敗しました')
     } finally {
       setLoading(false)
     }
   }
 
+  useEffect(() => {
+    fetchTodos()
+  }, [])
+
   const addTodo = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newTodo.trim()) return
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      setError(null)
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        console.error('セッションエラー:', sessionError)
+        setError('認証に失敗しました')
+        return
+      }
+      if (!session) {
+        setError('ログインが必要です')
+        return
+      }
 
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('todos')
         .insert([
           {
@@ -66,41 +88,55 @@ export const TodoList = () => {
           }
         ])
 
-      if (error) throw error
+      if (insertError) {
+        console.error('データ追加エラー:', insertError)
+        throw insertError
+      }
+
       setNewTodo('')
       fetchTodos()
     } catch (error) {
-      console.error('Error adding todo:', error)
+      console.error('TODOの追加に失敗しました:', error)
       setError('TODOの追加に失敗しました')
     }
   }
 
   const toggleTodo = async (id: string, isCompleted: boolean) => {
     try {
-      const { error } = await supabase
+      setError(null)
+      const { error: updateError } = await supabase
         .from('todos')
         .update({ is_completed: !isCompleted })
         .eq('id', id)
 
-      if (error) throw error
+      if (updateError) {
+        console.error('データ更新エラー:', updateError)
+        throw updateError
+      }
+
       fetchTodos()
     } catch (error) {
-      console.error('Error toggling todo:', error)
+      console.error('TODOの更新に失敗しました:', error)
       setError('TODOの更新に失敗しました')
     }
   }
 
   const deleteTodo = async (id: string) => {
     try {
-      const { error } = await supabase
+      setError(null)
+      const { error: deleteError } = await supabase
         .from('todos')
         .delete()
         .eq('id', id)
 
-      if (error) throw error
+      if (deleteError) {
+        console.error('データ削除エラー:', deleteError)
+        throw deleteError
+      }
+
       fetchTodos()
     } catch (error) {
-      console.error('Error deleting todo:', error)
+      console.error('TODOの削除に失敗しました:', error)
       setError('TODOの削除に失敗しました')
     }
   }
