@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { CalendarIcon, UsersIcon, CogIcon, HomeIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase/client'
 
 const navigation = [
   { name: 'ダッシュボード', href: '/', icon: HomeIcon },
@@ -14,11 +15,16 @@ const navigation = [
 
 export const Navigation = () => {
   const pathname = usePathname()
+  const router = useRouter()
   const { user, signOut } = useAuth()
 
   const handleLogout = async () => {
     try {
       await signOut()
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      
+      window.location.href = '/login'
     } catch (error) {
       console.error('ログアウトに失敗しました:', error)
     }
