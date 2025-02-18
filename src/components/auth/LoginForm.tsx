@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
@@ -9,6 +9,7 @@ const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/
 
 export const LoginForm = () => {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const redirectPath = searchParams.get('redirect') || '/'
   const [email, setEmail] = useState('')
@@ -40,7 +41,6 @@ export const LoginForm = () => {
         const passwordError = validatePassword(password)
         if (passwordError) {
           setError(passwordError)
-          setLoading(false)
           return
         }
 
@@ -58,18 +58,25 @@ export const LoginForm = () => {
         if (error) throw error
         setError('確認メールを送信しました。メールをご確認ください。')
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        // ログイン処理
+        const { error: signInError, data } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
-        if (error) {
-          if (error.message.includes('Invalid login credentials')) {
+
+        if (signInError) {
+          if (signInError.message.includes('Invalid login credentials')) {
             throw new Error('メールアドレスまたはパスワードが正しくありません')
           }
-          throw error
+          throw signInError
         }
-        // リダイレクト
-        window.location.href = redirectPath
+
+        if (!data?.session) {
+          throw new Error('ログインに失敗しました')
+        }
+
+        // ログイン成功後、即座にリダイレクト
+        router.push(redirectPath)
       }
     } catch (error) {
       console.error('認証エラー:', error)
@@ -92,7 +99,8 @@ export const LoginForm = () => {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="表示名を入力"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+            disabled={loading}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 disabled:opacity-50"
           />
         </div>
       )}
@@ -108,7 +116,8 @@ export const LoginForm = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="メールアドレスを入力"
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+          disabled={loading}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 disabled:opacity-50"
         />
       </div>
 
@@ -123,13 +132,15 @@ export const LoginForm = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            disabled={loading}
+            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
             placeholder={isSignUp ? "8文字以上の英数字を含むパスワード" : "パスワード"}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            disabled={loading}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center disabled:opacity-50"
           >
             {showPassword ? (
               <EyeSlashIcon className="h-5 w-5 text-gray-400" />
@@ -154,7 +165,7 @@ export const LoginForm = () => {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+        className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? '処理中...' : (isSignUp ? '新規登録' : 'ログイン')}
       </button>
@@ -166,7 +177,8 @@ export const LoginForm = () => {
             setIsSignUp(!isSignUp)
             setError(null)
           }}
-          className="text-sm text-indigo-600 hover:text-indigo-500"
+          disabled={loading}
+          className="text-sm text-indigo-600 hover:text-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSignUp ? 'ログインする' : '新規登録する'}
         </button>
