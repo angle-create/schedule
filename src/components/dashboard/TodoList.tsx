@@ -28,6 +28,8 @@ export const TodoList = () => {
 
       // セッションの確認
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      console.log('セッション状態:', session?.user?.id, 'エラー:', sessionError)
+      
       if (sessionError) {
         console.error('セッションエラー:', sessionError)
         setError('認証に失敗しました')
@@ -49,6 +51,8 @@ export const TodoList = () => {
         .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
+
+      console.log('データ取得結果:', { data, error: fetchError })
 
       if (fetchError) {
         console.error('データ取得エラー:', fetchError)
