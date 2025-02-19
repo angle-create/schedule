@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { RRule } from 'rrule'
-import { addDays } from 'date-fns'
+import { addDays, startOfMonth, endOfMonth } from 'date-fns'
 
 interface Schedule {
   id: string
@@ -25,27 +25,39 @@ export const useSchedules = (start?: Date, end?: Date) => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('user_schedules')
-          .select('*')
-          .order('start_time')
+  const fetchSchedules = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
 
-        if (error) throw error
+      // セッションの確認
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setSchedules([])
+        return
+      }
 
-        // 繰り返し予定を展開
-        const expandedSchedules = (data || []).flatMap(schedule => {
-          if (!schedule.rrule) {
-            return [schedule]
-          }
+      // 日付範囲の設定
+      const viewStart = start || startOfMonth(new Date())
+      const viewEnd = end || endOfMonth(new Date())
 
+      const { data, error } = await supabase
+        .from('user_schedules')
+        .select('*')
+        .gte('start_time', viewStart.toISOString())
+        .lte('end_time', viewEnd.toISOString())
+        .order('start_time')
+
+      if (error) throw error
+
+      // 繰り返し予定を展開
+      const expandedSchedules = (data || []).flatMap(schedule => {
+        if (!schedule.rrule) {
+          return [schedule]
+        }
+
+        try {
           const rule = RRule.fromString(schedule.rrule)
-          const viewStart = start || new Date()
-          const viewEnd = end || addDays(viewStart, 30)
-          
-          // 繰り返しの日付を取得
           const dates = rule.between(viewStart, viewEnd, true)
           
           return dates.map(date => {
@@ -61,16 +73,23 @@ export const useSchedules = (start?: Date, end?: Date) => {
               end_time: recurrenceEnd.toISOString(),
             }
           })
-        })
+        } catch (ruleError) {
+          console.error('繰り返しルールの解析に失敗しました:', ruleError)
+          return [schedule]
+        }
+      })
 
-        setSchedules(expandedSchedules)
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('スケジュールの取得に失敗しました'))
-      } finally {
-        setIsLoading(false)
-      }
+      setSchedules(expandedSchedules)
+    } catch (err) {
+      console.error('スケジュールの取得に失敗しました:', err)
+      setError(err instanceof Error ? err : new Error('スケジュールの取得に失敗しました'))
+      setSchedules([])
+    } finally {
+      setIsLoading(false)
     }
+  }, [start, end])
 
+  useEffect(() => {
     fetchSchedules()
 
     // リアルタイム更新のサブスクリプション
@@ -83,8 +102,11 @@ export const useSchedules = (start?: Date, end?: Date) => {
           schema: 'public',
           table: 'schedules'
         },
-        () => {
-          fetchSchedules()
+        (payload) => {
+          if (process.env.NODE_ENV === 'development') {
+            console.debug('Schedule update received:', payload);
+          }
+          fetchSchedules();
         }
       )
       .subscribe()
@@ -92,7 +114,7 @@ export const useSchedules = (start?: Date, end?: Date) => {
     return () => {
       subscription.unsubscribe()
     }
-  }, [start, end])
+  }, [fetchSchedules])
 
   return { schedules, isLoading, error }
 } 
