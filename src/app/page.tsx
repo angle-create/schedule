@@ -11,14 +11,12 @@ export default function DashboardPage() {
           <div className="h-44">
             <Clock />
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-hidden">
             <TodaySchedules />
           </div>
         </div>
-        <div className="lg:w-1/2 flex flex-col">
-          <div className="flex-1 min-h-0">
-            <TodoList />
-          </div>
+        <div className="lg:w-1/2 flex flex-col min-h-0 overflow-hidden">
+          <TodoList />
         </div>
       </div>
     </AppLayout>
