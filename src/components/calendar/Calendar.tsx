@@ -214,7 +214,27 @@ export const Calendar = () => {
   }, [])
 
   if (error) {
-    return <div className="text-red-500">エラーが発生しました</div>
+    return <div className="text-red-500">エラーが発生しました: {error.message}</div>
+  }
+
+  if (isLoading) {
+    return (
+      <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-lg h-full flex flex-col">
+        <div className="flex-none flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">カレンダー</h2>
+          <div className="flex gap-4 text-sm">
+            <div className="w-24 h-3 bg-gray-200 rounded animate-pulse"></div>
+            <div className="w-24 h-3 bg-gray-200 rounded animate-pulse"></div>
+            <div className="w-24 h-3 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+        <div className="flex-1 bg-white/50 backdrop-blur-sm rounded-xl p-4 min-h-0">
+          <div className="h-full flex items-center justify-center">
+            <div className="text-gray-500">データを読み込み中...</div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -266,14 +286,16 @@ export const Calendar = () => {
           .fc .fc-today-button {
             padding: 0.25rem 0.5rem;
             background-color: transparent !important;
-            color: #4b5563 !important;
+            color: #1f2937 !important;
             font-weight: 500;
             margin: 0 !important;
             white-space: nowrap;
+            border: 1px solid #e5e7eb !important;
+            transition: all 0.2s !important;
           }
           .fc .fc-today-button:hover {
             background-color: #f3f4f6 !important;
-            border-color: transparent !important;
+            border-color: #d1d5db !important;
           }
           .fc .fc-prev-button,
           .fc .fc-next-button {
@@ -290,11 +312,11 @@ export const Calendar = () => {
           }
           .fc .fc-prev-button::after,
           .fc .fc-next-button::after {
-            content: "←" !important;
+            content: "<" !important;
             font-family: system-ui, -apple-system, sans-serif !important;
           }
           .fc .fc-next-button::after {
-            content: "→" !important;
+            content: ">" !important;
           }
           .fc .fc-icon {
             display: none !important;
@@ -445,10 +467,17 @@ export const Calendar = () => {
           fixedWeekCount={false}
           showNonCurrentDates={true}
           headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
+            left: 'today',
+            center: 'prev title next',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
           }}
+          buttonText={{
+            today: '今日',
+            month: '月',
+            week: '週',
+            day: '日'
+          }}
+          locale={jaLocale}
           events={events}
           eventContent={renderEventContent}
           eventClick={handleEventClick}
