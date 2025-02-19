@@ -6,7 +6,7 @@ import { Clock } from '@/components/dashboard/Clock'
 export default function DashboardPage() {
   return (
     <AppLayout>
-      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-5rem)] py-4">
+      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-3.5rem)] py-2">
         <div className="lg:w-1/2 flex flex-col gap-6">
           <div className="h-44">
             <Clock />
