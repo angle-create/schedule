@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/useAuth'
 
 interface User {
   id: string
@@ -13,6 +14,7 @@ export const useUsers = () => {
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const { user, isInitialized } = useAuth()
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -28,6 +30,7 @@ export const useUsers = () => {
       const { data, error: fetchError } = await supabase
         .from('users')
         .select('*')
+        .order('role', { ascending: false })
         .order('display_name')
 
       if (fetchError) {
@@ -47,26 +50,33 @@ export const useUsers = () => {
     }
   }, [])
 
-  // 認証状態の監視
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        fetchUsers()
-      } else {
-        setUsers([])
-        setError(new Error('認証が必要です'))
+    if (user && isInitialized) {
+      fetchUsers()
+
+      const subscription = supabase
+        .channel('users_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'users'
+          },
+          () => {
+            fetchUsers()
+          }
+        )
+        .subscribe()
+
+      return () => {
+        subscription.unsubscribe()
       }
-    })
-
-    // 初回データ取得
-    fetchUsers()
-
-    return () => {
-      subscription.unsubscribe()
+    } else if (isInitialized && !user) {
+      setUsers([])
+      setError(new Error('認証が必要です'))
     }
-  }, [fetchUsers])
+  }, [fetchUsers, user, isInitialized])
 
   return { users, isLoading, error, refetch: fetchUsers }
 } 
