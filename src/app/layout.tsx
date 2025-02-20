@@ -1,8 +1,6 @@
-'use client'
-
 import './globals.css'
 import { Inter } from 'next/font/google'
-import { Suspense } from 'react'
+import { RootLayoutClient } from '@/components/layout/RootLayoutClient'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,9 +17,9 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${inter.className} bg-gray-100`}>
-        <Suspense fallback={<div>Loading...</div>}>
+        <RootLayoutClient>
           {children}
-        </Suspense>
+        </RootLayoutClient>
       </body>
     </html>
   )
