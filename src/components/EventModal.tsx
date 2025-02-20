@@ -17,6 +17,7 @@ interface EventModalProps {
 }
 
 interface EventData {
+  id?: string;
   title: string;
   description?: string;
   startTime: Date;
@@ -25,6 +26,7 @@ interface EventData {
   location?: string;
   isOnline: boolean;
   rrule?: string;
+  creatorId?: string;
   notificationSettings?: {
     slackChannel?: string;
     slackMentionType?: 'none' | 'direct' | 'here' | 'channel';
