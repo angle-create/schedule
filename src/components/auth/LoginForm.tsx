@@ -37,7 +37,6 @@ export const LoginForm = () => {
 
     try {
       if (isSignUp) {
-        // パスワードのバリデーション
         const passwordError = validatePassword(password)
         if (passwordError) {
           setError(passwordError)
@@ -59,7 +58,6 @@ export const LoginForm = () => {
 
         setError('確認メールを送信しました。メールをご確認ください。')
       } else {
-        // ログイン処理
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -72,7 +70,6 @@ export const LoginForm = () => {
           throw signInError
         }
 
-        // ログイン成功後、即座にリダイレクト
         router.push(redirectPath)
       }
     } catch (error) {
@@ -84,7 +81,7 @@ export const LoginForm = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md">
       {isSignUp && (
         <div>
           <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
@@ -97,7 +94,7 @@ export const LoginForm = () => {
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="表示名を入力"
             disabled={loading}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 disabled:opacity-50"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
           />
         </div>
       )}
@@ -114,7 +111,7 @@ export const LoginForm = () => {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="メールアドレスを入力"
           disabled={loading}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 disabled:opacity-50"
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
         />
       </div>
 
@@ -130,7 +127,7 @@ export const LoginForm = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={loading}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
             placeholder={isSignUp ? "8文字以上の英数字を含むパスワード" : "パスワード"}
           />
           <button
@@ -162,7 +159,7 @@ export const LoginForm = () => {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? '処理中...' : (isSignUp ? '新規登録' : 'ログイン')}
       </button>
@@ -175,12 +172,12 @@ export const LoginForm = () => {
             setError(null)
           }}
           disabled={loading}
-          className="text-sm text-indigo-600 hover:text-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="text-sm text-primary hover:text-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSignUp ? 'ログインする' : '新規登録する'}
         </button>
         <div className="border-t border-gray-200" />
-        <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500 block">
+        <a href="#" className="text-sm text-primary hover:text-primary/90 block">
           パスワードをお忘れの方はこちら
         </a>
       </div>
