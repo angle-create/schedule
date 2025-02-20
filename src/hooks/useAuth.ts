@@ -10,7 +10,7 @@ const AUTH_REQUIRED_PATHS = ['/', '/calendar', '/team', '/settings'];
 // 認証済みユーザーがアクセスできないパス
 const PUBLIC_ONLY_PATHS = ['/login'];
 
-interface AuthUser extends User {
+export interface AuthUser extends User {
   role?: 'admin' | 'member';
   timezone?: string;
   display_name?: string;

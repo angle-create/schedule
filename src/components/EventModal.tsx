@@ -6,6 +6,7 @@ import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { NotificationSettingsForm } from './NotificationSettingsForm';
 import { RecurrenceSettingsForm } from './RecurrenceSettingsForm';
 import { canEditSchedule, canUpdateParticipantStatus } from '@/utils/permissions';
+import type { AuthUser } from '@/hooks/useAuth';
 
 interface EventModalProps {
   isOpen: boolean;
