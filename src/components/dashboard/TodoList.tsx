@@ -138,6 +138,17 @@ export const TodoList = () => {
     // 初期化実行
     initialize()
 
+    // visibilitychangeイベントのハンドラー
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('ページがアクティブになりました')
+        initialize()
+      }
+    }
+
+    // visibilitychangeイベントリスナーを追加
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     // 認証状態の監視
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -195,6 +206,7 @@ export const TodoList = () => {
     return () => {
       console.log('コンポーネントのクリーンアップ')
       mounted = false
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       if (authSubscription) {
         authSubscription.unsubscribe()
       }
