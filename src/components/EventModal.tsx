@@ -67,7 +67,7 @@ export const EventModal = ({
   );
   const { settings: notificationSettings, updateSettings: updateNotificationSettings } = useNotificationSettings(currentUser.id);
 
-  const canEdit = initialData 
+  const canEdit = initialData && initialData.id && initialData.creatorId
     ? canEditSchedule({ 
         id: initialData.id, 
         creator_id: initialData.creatorId,
@@ -75,7 +75,7 @@ export const EventModal = ({
       }, currentUser)
     : true;
 
-  const canUpdateStatus = initialData
+  const canUpdateStatus = initialData && initialData.id && initialData.creatorId
     ? canUpdateParticipantStatus({
         id: initialData.id,
         creator_id: initialData.creatorId,
