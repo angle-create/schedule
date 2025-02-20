@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { EventModal } from '../EventModal'
 import { useScheduleMutation } from '@/hooks/useScheduleMutation'
-import { format } from 'date-fns'
+import '@testing-library/jest-dom'
 
 // モックの設定
 jest.mock('@/hooks/useScheduleMutation')

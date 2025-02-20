@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import dynamic from 'next/dynamic'
-import { EventApi, DateSelectArg, EventClickArg, EventSourceInput, EventDropArg } from '@fullcalendar/core'
+import { DateSelectArg, EventClickArg, EventSourceInput, EventDropArg } from '@fullcalendar/core'
 import { EventResizeDoneArg } from '@fullcalendar/interaction'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -12,7 +12,6 @@ import { EventModal } from './EventModal'
 import { useSchedules } from '@/hooks/useSchedules'
 import { useScheduleMutation } from '@/hooks/useScheduleMutation'
 import { useAuth } from '@/hooks/useAuth'
-import { differenceInMinutes } from 'date-fns'
 import { eventColors } from '@/utils/eventColors'
 import { canEditSchedule } from '@/utils/permissions'
 
@@ -24,35 +23,6 @@ const FullCalendarComponent = dynamic(
     loading: () => <div className="h-[600px] bg-white rounded-lg shadow-sm p-4 flex items-center justify-center">Loading...</div>
   }
 )
-
-// 型定義の追加
-interface ExpandedSchedule {
-  id: string
-  title: string
-  description?: string
-  start_time: string
-  end_time: string
-  is_online: boolean
-  location?: string
-  creator_id: string
-  participant_ids?: string[]
-  participant_status?: string
-  original_id?: string
-  rrule?: string
-  recurrence_id?: string
-}
-
-interface UpdateScheduleData {
-  id: string
-  title: string
-  description?: string
-  start_time: string
-  end_time: string
-  is_online: boolean
-  location?: string
-  participant_ids?: string[]
-  exception_dates?: string[]
-}
 
 interface Schedule {
   id: string
@@ -70,35 +40,28 @@ interface Schedule {
   recurrence_id?: string
 }
 
-interface ScheduleEventColors {
-  backgroundColor: string
-  borderColor: string
-  textColor: string
+interface EventContentInfo {
+  event: {
+    title: string;
+  };
 }
 
-interface EventColors {
-  online: ScheduleEventColors
-  offline: ScheduleEventColors
-  pending: ScheduleEventColors
-  accepted: ScheduleEventColors
-  declined: ScheduleEventColors
-  created: ScheduleEventColors
-  [key: string]: ScheduleEventColors
-}
-
-interface EventModalProps {
-  onClose: () => void
-  initialData: any
-  currentUserId: string
-  onSubmit: (eventData: UpdateScheduleData) => Promise<void>
-  date: Date
+interface UpdateScheduleData {
+  id: string
+  title: string
+  description?: string
+  start_time: string
+  end_time: string
+  is_online: boolean
+  location?: string
+  participant_ids?: string[]
+  exception_dates?: string[]
 }
 
 export const Calendar = () => {
-  const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('dayGridMonth')
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [showEventModal, setShowEventModal] = useState(false)
-  const [selectedEvent, setSelectedEvent] = useState<any>(null)
+  const [selectedEvent, setSelectedEvent] = useState<Schedule | null>(null)
   const { schedules, isLoading, error } = useSchedules()
   const { updateSchedule } = useScheduleMutation()
   const { user } = useAuth()
@@ -116,12 +79,13 @@ export const Calendar = () => {
       id: event.id,
       title: event.title,
       description: event.extendedProps.description,
-      startTime: event.start,
-      endTime: event.end,
-      isOnline: event.extendedProps.isOnline,
+      start_time: event.start?.toISOString() || '',
+      end_time: event.end?.toISOString() || '',
+      is_online: event.extendedProps.isOnline,
       location: event.extendedProps.location,
-      participantIds: event.extendedProps.participantIds,
-      rrule: event.extendedProps.rrule
+      participant_ids: event.extendedProps.participantIds,
+      rrule: event.extendedProps.rrule,
+      creator_id: event.extendedProps.creatorId
     })
     setShowEventModal(true)
   }, [])
@@ -166,7 +130,7 @@ export const Calendar = () => {
       console.error('予定の更新に失敗しました:', error)
       resizeInfo.revert()
     }
-  }, [updateSchedule, user])
+  }, [updateSchedule])
 
   const getEventColors = useCallback((schedule: Schedule) => {
     // 自分が作成した予定
@@ -204,7 +168,7 @@ export const Calendar = () => {
     editable: canEditSchedule(schedule, user)
   })) || []
 
-  const renderEventContent = useCallback((eventInfo: any) => {
+  const renderEventContent = useCallback((eventInfo: EventContentInfo) => {
     const { event } = eventInfo
     return (
       <>
@@ -463,7 +427,7 @@ export const Calendar = () => {
         `}</style>
         <FullCalendarComponent
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView={view}
+          initialView="dayGridMonth"
           fixedWeekCount={false}
           showNonCurrentDates={true}
           headerToolbar={{

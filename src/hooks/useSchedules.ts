@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { RRule } from 'rrule'
-import { addDays, startOfMonth, endOfMonth } from 'date-fns'
+import { startOfMonth, endOfMonth } from 'date-fns'
 import { useAuth } from '@/hooks/useAuth'
 
 interface Schedule {
@@ -25,10 +25,10 @@ export const useSchedules = (start?: Date, end?: Date) => {
   const [schedules, setSchedules] = useState<ExpandedSchedule[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
-  const { user, hasPermission, isInitialized } = useAuth()
+  const { user, hasPermission } = useAuth()
   const isMounted = useRef(true)
   const lastFetchTime = useRef<number>(0)
-  const fetchTimeoutRef = useRef<NodeJS.Timeout>()
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   const fetchSchedules = useCallback(async () => {
     // 最後のフェッチから1秒以内の場合はスキップ
@@ -38,7 +38,7 @@ export const useSchedules = (start?: Date, end?: Date) => {
     }
     lastFetchTime.current = now
 
-    if (!isInitialized || !isMounted.current) return
+    if (!isMounted.current) return
     
     console.log('fetchSchedules開始')
     try {
@@ -127,7 +127,7 @@ export const useSchedules = (start?: Date, end?: Date) => {
         console.log('fetchSchedules完了')
       }
     }
-  }, [user, isInitialized, start, end])
+  }, [user, start, end])
 
   const debouncedFetchSchedules = useCallback(() => {
     if (fetchTimeoutRef.current) {
@@ -150,7 +150,7 @@ export const useSchedules = (start?: Date, end?: Date) => {
   }, [])
 
   useEffect(() => {
-    if (user && isInitialized) {
+    if (user) {
       debouncedFetchSchedules()
 
       // visibilitychangeイベントのハンドラー
@@ -190,12 +190,12 @@ export const useSchedules = (start?: Date, end?: Date) => {
         document.removeEventListener('visibilitychange', handleVisibilityChange)
         subscription.unsubscribe()
       }
-    } else if (isInitialized && !user) {
-      // 認証が初期化され、ユーザーがいない場合はスケジュールをクリア
+    } else {
+      // ユーザーがいない場合はスケジュールをクリア
       setSchedules([])
       setError(new Error('認証が必要です'))
     }
-  }, [debouncedFetchSchedules, user, isInitialized, start, end])
+  }, [debouncedFetchSchedules, user])
 
   return {
     schedules: schedules.map(schedule => ({

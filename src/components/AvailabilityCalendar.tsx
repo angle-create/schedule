@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { useParticipantAvailability } from '@/hooks/useParticipantAvailability';
+import { EventInput } from '@fullcalendar/core';
 
 interface AvailabilityCalendarProps {
   participantIds: string[];
@@ -14,7 +15,7 @@ export const AvailabilityCalendar = ({
   startDate,
   endDate
 }: AvailabilityCalendarProps) => {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<EventInput[]>([]);
   const { availabilities, isLoading } = useParticipantAvailability(
     participantIds,
     startDate,

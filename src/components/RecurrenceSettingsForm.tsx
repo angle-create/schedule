@@ -1,5 +1,16 @@
 import { useState } from 'react';
-import { RRule, Frequency } from 'rrule';
+import { RRule, Frequency, Weekday } from 'rrule';
+
+// カスタムOptions型を定義
+interface RRuleOptions {
+  freq: Frequency;
+  interval?: number;
+  dtstart?: Date;
+  until?: Date;
+  byweekday?: Weekday[];
+  wkst?: number;
+  count?: number;
+}
 
 interface RecurrenceSettingsFormProps {
   value?: string;
@@ -10,18 +21,34 @@ export const RecurrenceSettingsForm = ({
   value,
   onChange
 }: RecurrenceSettingsFormProps) => {
-  const [frequency, setFrequency] = useState<Frequency>(
-    value ? RRule.fromString(value).freq : RRule.WEEKLY
-  );
-  const [interval, setInterval] = useState<number>(
-    value ? RRule.fromString(value).interval : 1
-  );
-  const [byweekday, setByweekday] = useState<number[]>(
-    value ? RRule.fromString(value).byweekday?.map(day => day.weekday) || [] : []
-  );
-  const [until, setUntil] = useState<Date | null>(
-    value ? RRule.fromString(value).until || null : null
-  );
+  const [frequency, setFrequency] = useState<Frequency>(() => {
+    if (value) {
+      const rule = RRule.fromString(value);
+      return (rule as unknown as { options: { freq: Frequency } }).options.freq;
+    }
+    return RRule.WEEKLY;
+  });
+  const [interval, setInterval] = useState<number>(() => {
+    if (value) {
+      const rule = RRule.fromString(value);
+      return (rule as unknown as { options: { interval: number } }).options.interval || 1;
+    }
+    return 1;
+  });
+  const [byweekday, setByweekday] = useState<number[]>(() => {
+    if (value) {
+      const rule = RRule.fromString(value);
+      return ((rule as unknown as { options: { byweekday?: { weekday: number }[] } }).options.byweekday || []).map(day => day.weekday);
+    }
+    return [];
+  });
+  const [until, setUntil] = useState<Date | null>(() => {
+    if (value) {
+      const rule = RRule.fromString(value);
+      return (rule as unknown as { options: { until?: Date } }).options.until || null;
+    }
+    return null;
+  });
   const [isEnabled, setIsEnabled] = useState(!!value);
 
   const weekdays = [
@@ -69,7 +96,7 @@ export const RecurrenceSettingsForm = ({
       return;
     }
 
-    const options: any = {
+    const options: RRuleOptions = {
       freq,
       interval: int,
     };

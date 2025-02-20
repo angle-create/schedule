@@ -17,6 +17,31 @@ interface Notification {
   is_read: boolean
 }
 
+interface ScheduleData {
+  id: string
+  schedule_id: string
+  schedules: {
+    title: string
+    start_time: string
+    creator: {
+      display_name: string
+    }
+  }
+}
+
+interface ChangeData {
+  id: string
+  schedule_id: string
+  schedules: {
+    title: string
+  }
+  changed_by: {
+    display_name: string
+  }
+  change_type: 'created' | 'updated' | 'deleted'
+  created_at: string
+}
+
 export const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
@@ -50,7 +75,7 @@ export const Notifications = () => {
           `)
           .eq('status', 'pending')
           .eq('is_read', false)
-          .eq('user_id', session.user.id)
+          .eq('user_id', session.user.id) as { data: ScheduleData[] | null, error: Error | null }
 
         if (scheduleError) {
           console.error('Schedule fetch error:', scheduleError)
@@ -70,7 +95,7 @@ export const Notifications = () => {
           `)
           .eq('is_read', false)
           .neq('changed_by', session.user.id)
-          .order('created_at', { ascending: false })
+          .order('created_at', { ascending: false }) as { data: ChangeData[] | null, error: Error | null }
 
         if (changeError) {
           console.error('Change history fetch error:', changeError)

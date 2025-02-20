@@ -27,13 +27,16 @@ interface EventData {
   isOnline: boolean;
   rrule?: string;
   creatorId?: string;
-  notificationSettings?: {
-    slackChannel?: string;
-    slackMentionType?: 'none' | 'direct' | 'here' | 'channel';
-    emailNotifications?: boolean;
-    systemNotifications?: boolean;
-    reminderBeforeMinutes?: number;
-  };
+  notificationSettings?: NotificationSettings;
+  participantStatus?: 'accepted' | 'declined';
+}
+
+interface NotificationSettings {
+  slackChannel: string | null | undefined;
+  slackMentionType: 'none' | 'direct' | 'here' | 'channel' | undefined;
+  emailNotifications: boolean | undefined;
+  systemNotifications: boolean | undefined;
+  reminderBeforeMinutes: number | undefined;
 }
 
 export const EventModal = ({
@@ -58,6 +61,9 @@ export const EventModal = ({
   const [isOnline, setIsOnline] = useState(initialData?.isOnline || false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [rrule, setRrule] = useState<string | null>(initialData?.rrule || null);
+  const [participantStatus, setParticipantStatus] = useState<'accepted' | 'declined' | undefined>(
+    initialData?.participantStatus
+  );
 
   const { users, isLoading: isLoadingUsers } = useUsers();
   const { availabilities, isLoading: isLoadingAvailabilities } = useParticipantAvailability(
@@ -111,6 +117,20 @@ export const EventModal = ({
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
+  };
+
+  const handleStatusUpdate = async (status: 'accepted' | 'declined') => {
+    if (!initialData?.id) return;
+    try {
+      setParticipantStatus(status);
+      await onSubmit({
+        ...initialData,
+        participantStatus: status
+      });
+      onClose();
+    } catch (error) {
+      console.error('ステータスの更新に失敗しました:', error);
+    }
   };
 
   return (

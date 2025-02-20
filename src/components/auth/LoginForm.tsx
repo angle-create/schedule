@@ -44,7 +44,7 @@ export const LoginForm = () => {
           return
         }
 
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -60,7 +60,7 @@ export const LoginForm = () => {
         setError('確認メールを送信しました。メールをご確認ください。')
       } else {
         // ログイン処理
-        const { error: signInError, data } = await supabase.auth.signInWithPassword({
+        const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
@@ -70,10 +70,6 @@ export const LoginForm = () => {
             throw new Error('メールアドレスまたはパスワードが正しくありません')
           }
           throw signInError
-        }
-
-        if (!data?.session) {
-          throw new Error('ログインに失敗しました')
         }
 
         // ログイン成功後、即座にリダイレクト

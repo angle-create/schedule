@@ -14,7 +14,7 @@ export const useUsers = () => {
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
-  const { user, isInitialized } = useAuth()
+  const { user, isLoading: isAuthLoading } = useAuth()
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -51,7 +51,7 @@ export const useUsers = () => {
   }, [])
 
   useEffect(() => {
-    if (user && isInitialized) {
+    if (user && !isAuthLoading) {
       fetchUsers()
 
       const subscription = supabase
@@ -72,11 +72,11 @@ export const useUsers = () => {
       return () => {
         subscription.unsubscribe()
       }
-    } else if (isInitialized && !user) {
+    } else if (!isAuthLoading && !user) {
       setUsers([])
       setError(new Error('認証が必要です'))
     }
-  }, [fetchUsers, user, isInitialized])
+  }, [fetchUsers, user, isAuthLoading])
 
   return { users, isLoading, error, refetch: fetchUsers }
 } 

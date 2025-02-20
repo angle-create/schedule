@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { format } from 'date-fns'
-import { ja } from 'date-fns/locale'
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { RealtimeChannel } from '@supabase/supabase-js'
 
 interface Todo {
   id: string
@@ -82,11 +81,11 @@ export const TodoList = () => {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [todos.length])
 
   useEffect(() => {
     let mounted = true
-    let todoSubscription: any = null
+    let todoSubscription: RealtimeChannel | null = null
 
     const initialize = async () => {
       try {

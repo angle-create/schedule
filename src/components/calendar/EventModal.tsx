@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { ja } from 'date-fns/locale'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useScheduleMutation } from '@/hooks/useScheduleMutation'
 import { useUsers } from '@/hooks/useUsers'

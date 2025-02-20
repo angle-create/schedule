@@ -10,7 +10,11 @@ interface ChangeHistory {
   schedule_id: string
   changed_by: string
   change_type: 'created' | 'updated' | 'deleted'
-  changes: any
+  changes: {
+    field: string;
+    old_value: string | null;
+    new_value: string | null;
+  }[]
   created_at: string
   schedule_title: string
 }

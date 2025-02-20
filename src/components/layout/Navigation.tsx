@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { CalendarIcon, UsersIcon, CogIcon, HomeIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase/client'
@@ -15,7 +15,6 @@ const navigation = [
 
 export const Navigation = () => {
   const pathname = usePathname()
-  const router = useRouter()
   const { user, signOut } = useAuth()
 
   const handleLogout = async () => {

@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MiniCalendar } from '../MiniCalendar'
-import { format } from 'date-fns'
-import { ja } from 'date-fns/locale'
+import '@testing-library/jest-dom'
 
 describe('MiniCalendar', () => {
   beforeEach(() => {
